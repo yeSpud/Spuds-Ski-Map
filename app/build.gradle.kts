@@ -5,7 +5,7 @@ plugins {
 
 android {
 	namespace = "xyz.thespud.skimap"
-	compileSdk = 35
+	compileSdk = 36
 
 	defaultConfig {
 		minSdk = 22
@@ -37,6 +37,10 @@ dependencies {
 	implementation(libs.androidx.core.ktx)
 	implementation(libs.androidx.appcompat)
 	implementation(libs.material)
+	implementation(libs.play.services.maps)
+	implementation(libs.android.maps.utils)
+	implementation(libs.maps.ktx)
+	implementation(libs.maps.utils.ktx)
 	testImplementation(libs.junit)
 	androidTestImplementation(libs.androidx.junit)
 	androidTestImplementation(libs.androidx.espresso.core)
