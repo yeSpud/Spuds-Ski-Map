@@ -1,31 +1,3 @@
 <resources>
-
-    <!-- Location alert dialog -->
-    <string name="alert_title">A note about location</string>
-    <string name="alert_message">Your (precise) location is used to determine which runs you are on, and to track if you are no longer on the mountain. This data is gathered and used in the background <b>only while you are on the mountain</b>. Your location data never leaves your device.</string>
-    <string name="alert_ok">Understood</string>
-
-    <!-- Marker text -->
-    <string name="your_location">You are here</string>
-    <string name="more_info">Tap for additional stats</string>
-    <string name="marker_altitude">Altitude: %d ft</string>
-    <string name="marker_speed">Speed: %d mph</string>
-
-    <!-- Run headers -->
-    <string name="current_run">Currently on run: %s</string>
-    <string name="current_chairlift">Currently on: %s</string>
-    <string name="current_other">Currently at %s</string>
-
-    <!-- Notification stuff -->
-    <string name="tracking_notification_channel_name">Location Tracking</string>
-    <string name="tracking_notice">Tracking your location</string>
-    <string name="activity_summary_notification_channel_name">Activity Summary</string>
-    <string name="activity_notification_text">Tap here to view your activity summary</string>
-
-    <!-- Toast text -->
-    <string name="bounds_missing">Stopping location tracking due to missing bounds</string>
-    <string name="out_of_bounds">Stopping location tracking as user is outside ski area bounds</string>
-    <string name="starting_tracking">Starting location tracking</string>
-    <string name="computing_location">Adding locations to map…</string>
-    <string name="done">Done!</string>
+    <string name="app_name">Spud\'s Ski Map</string>
 </resources>

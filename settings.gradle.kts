@@ -19,5 +19,6 @@ dependencyResolutionManagement {
 	}
 }
 
-rootProject.name = "Spuds-Ski-Map"
+rootProject.name = "Spud's Ski Map"
 include(":app")
+include(":Spuds-Ski-Map")
