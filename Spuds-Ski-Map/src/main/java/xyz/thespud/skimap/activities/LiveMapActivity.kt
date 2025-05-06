@@ -7,14 +7,17 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
+import android.content.pm.PackageManager
 import android.location.Location
 import android.location.LocationManager
 import android.os.IBinder
+import android.os.Process
 import android.util.Log
 import androidx.annotation.RawRes
 import androidx.core.app.ActivityCompat
 import androidx.fragment.app.FragmentActivity
 import com.google.android.gms.maps.OnMapReadyCallback
+import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
 import com.google.android.gms.maps.model.Marker
@@ -27,12 +30,13 @@ import xyz.thespud.skimap.services.SkierLocationService
 
 abstract class LiveMapActivity(
 	activity: FragmentActivity, val leftPadding: Int, val topPadding: Int, val rightPadding: Int,
-	val bottomPadding: Int, cameraBounds: LatLngBounds, @RawRes lifts: Int, @RawRes green: Int,
-	@RawRes blue: Int, @RawRes black: Int, @RawRes doubleBlack: Int, @RawRes starting_lifts_bounds: Int,
-	@RawRes ending_lifts_bounds: Int, @RawRes green_polygons: Int, @RawRes blue_polygons: Int,
-	@RawRes black_polygons: Int, @RawRes double_black_polygons: Int, @RawRes other: Int): MapHandler(
-	activity, cameraBounds, lifts, green, blue, black, doubleBlack, starting_lifts_bounds, ending_lifts_bounds,
-	green_polygons, blue_polygons, black_polygons, double_black_polygons, other), ServiceCallbacks {
+	val bottomPadding: Int, cameraPosition: CameraPosition, cameraBounds: LatLngBounds, @RawRes lifts: Int?,
+	@RawRes green: Int?, @RawRes blue: Int?, @RawRes black: Int?, @RawRes doubleBlack: Int?,
+	@RawRes starting_lifts_bounds: Int?, @RawRes ending_lifts_bounds: Int?, @RawRes green_polygons: Int?,
+	@RawRes blue_polygons: Int?, @RawRes black_polygons: Int?, @RawRes double_black_polygons: Int?,
+	@RawRes other: Int): MapHandler(activity, cameraPosition, cameraBounds, lifts, green, blue, black,
+	doubleBlack, starting_lifts_bounds, ending_lifts_bounds, green_polygons, blue_polygons, black_polygons,
+	double_black_polygons, other), ServiceCallbacks {
 
 	private var locationMarker: Marker? = null
 
@@ -41,9 +45,6 @@ abstract class LiveMapActivity(
 	var skierLocationService: SkierLocationService? = null
 	private set
 	private var bound = false
-
-	// Boolean used to determine if the user's precise location is enabled (and therefore accessible).
-	private var locationEnabled = false
 
 	var manuallyDisabled = false
 	private set
@@ -70,6 +71,10 @@ abstract class LiveMapActivity(
 	}
 
 	override val additionalCallback: OnMapReadyCallback = OnMapReadyCallback {
+
+		// Determine if the user has enabled location permissions.
+		val locationEnabled = activity.checkPermission(Manifest.permission.ACCESS_FINE_LOCATION, Process.myPid(),
+			Process.myUid()) == PackageManager.PERMISSION_GRANTED
 
 		// Request location permission, so that we can get the location of the device.
 		// The result of the permission request is handled by a callback, onRequestPermissionsResult.
@@ -103,6 +108,14 @@ abstract class LiveMapActivity(
 			Log.v("LiveMapActivity", "Removing location marker")
 			locationMarker!!.remove()
 			locationMarker = null
+		}
+
+		if (bound) {
+			skierLocationService!!.setCallbacks(null)
+			activity.unbindService(serviceConnection)
+			skierLocationService = null
+			isTrackingLocation = false
+			bound = false
 		}
 
 		super.destroy()

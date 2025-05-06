@@ -1,0 +1,140 @@
+package xyz.thespud.skimap.services
+
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.content.Context
+import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.drawable.BitmapDrawable
+import android.graphics.drawable.Drawable
+import android.os.Build
+import android.util.Log
+import androidx.annotation.DrawableRes
+import androidx.annotation.StringRes
+import androidx.appcompat.content.res.AppCompatResources
+import androidx.core.app.NotificationCompat
+import androidx.core.graphics.createBitmap
+import androidx.fragment.app.FragmentActivity
+import xyz.thespud.skimap.R
+
+object SkiingNotification {
+
+	const val TRACKING_SERVICE_ID = 69
+
+	const val ACTIVITY_SUMMARY_ID = 420
+
+	const val ACTIVITY_SUMMARY_LAUNCH_DATE = "activitySummaryLaunchDate"
+
+	const val TRACKING_SERVICE_CHANNEL_ID = "skiAppTracker"
+
+	const val ACTIVITY_SUMMARY_CHANNEL_ID = "skiAppProgress"
+
+
+	fun setupNotificationChannels(context: Context) {
+		val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+			val trackingNotificationChannel = NotificationChannel(
+				TRACKING_SERVICE_CHANNEL_ID,
+				context.getString(R.string.tracking_notification_channel_name), NotificationManager.IMPORTANCE_LOW)
+
+			val progressNotificationChannel = NotificationChannel(
+				ACTIVITY_SUMMARY_CHANNEL_ID,
+				context.getString(R.string.activity_summary_notification_channel_name), NotificationManager.IMPORTANCE_DEFAULT)
+
+			notificationManager.createNotificationChannels(listOf(trackingNotificationChannel, progressNotificationChannel))
+			Log.v("onCreate", "Created new notification channel")
+		}
+	}
+
+	fun cancelTrackingNotification(context: Context) {
+		val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+		notificationManager.cancel(TRACKING_SERVICE_ID)
+	}
+
+	fun updateTrackingNotification(context: Context, serviceCallbacks: ServiceCallbacks, title: String,
+	                               @DrawableRes icon: Int?) {
+
+		val bitmap: Bitmap? = if (icon != null) {
+			drawableToBitmap(AppCompatResources.getDrawable(context, icon)!!)
+		} else {
+			null
+		}
+
+		val notification: Notification = createPersistentNotification(context, serviceCallbacks.getLaunchingActivity(),
+			title, bitmap, "")
+
+		val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+		// Make sure we arent setting the same notification
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+			for (shownNotification in notificationManager.activeNotifications) {
+				val shownNotificationText = shownNotification.notification.extras.getString(
+					Notification.EXTRA_TEXT)
+				val notificationText = notification.extras.getString(Notification.EXTRA_TEXT)
+				if (shownNotificationText == notificationText) {
+					return
+				}
+			}
+		}
+		notificationManager.notify(TRACKING_SERVICE_ID, notification)
+	}
+
+	fun createPersistentNotification(context: Context, activityToLaunch: FragmentActivity, title: String,
+	                                         iconBitmap: Bitmap?, fileToOpen: String): Notification {
+
+		val stopIntent = Intent(context, SkierLocationService::class.java)
+		stopIntent.action = SkierLocationService.STOP_TRACKING_INTENT
+
+		val notificationIntent = Intent(context, activityToLaunch::class.java)
+		notificationIntent.putExtra(ACTIVITY_SUMMARY_LAUNCH_DATE, fileToOpen)
+
+		val pendingIntent: PendingIntent = PendingIntent.getActivity(context, 0,
+			notificationIntent, PendingIntent.FLAG_IMMUTABLE)
+
+		val builder: NotificationCompat.Builder = getNotificationBuilder(context, TRACKING_SERVICE_CHANNEL_ID,
+			false, R.string.tracking_notice, pendingIntent)
+			.setContentText(title)
+			.addAction(0, "Stop Tracking", PendingIntent.getService(context, 0,
+				stopIntent, PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE))
+
+		if (iconBitmap != null) {
+			builder.setLargeIcon(iconBitmap)
+		}
+
+		return builder.build()
+	}
+
+	private fun getNotificationBuilder(context: Context, channelId: String, showTime: Boolean,
+	                                   @StringRes titleText: Int, pendingIntent: PendingIntent):
+			NotificationCompat.Builder {
+
+		return NotificationCompat.Builder(context, channelId)
+			.setSmallIcon(context.applicationInfo.icon)
+			.setShowWhen(showTime)
+			.setContentTitle(context.getString(titleText))
+			.setContentIntent(pendingIntent)
+	}
+
+	/**
+	 * @author https://studiofreya.com/2018/08/15/android-notification-large-icon-from-vector-xml/
+	 */
+	private fun drawableToBitmap(drawable: Drawable): Bitmap? {
+
+		if (drawable is BitmapDrawable) {
+			return drawable.bitmap
+		}
+
+		val bitmap: Bitmap = createBitmap(drawable.intrinsicWidth, drawable.intrinsicHeight)
+
+		val canvas = Canvas(bitmap)
+		drawable.setBounds(0, 0, canvas.width, canvas.height)
+		drawable.draw(canvas)
+
+		return bitmap
+	}
+
+}

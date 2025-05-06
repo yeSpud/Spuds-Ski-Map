@@ -7,7 +7,7 @@ import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 import xyz.thespud.skimap.R
 
-class InfoMapOptionsDialog(private val infoMapActivity: InfoMapActivity): MapOptionsDialog(
+open class InfoMapOptionsDialog(private val infoMapActivity: InfoMapActivity): MapOptionsDialog(
 	infoMapActivity.activity.layoutInflater, R.layout.info_map_options, infoMapActivity) {
 
 	private var showDotsImage: MapOptionItem? = null

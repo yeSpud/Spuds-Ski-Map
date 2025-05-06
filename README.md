@@ -4,8 +4,99 @@ This is an android library used for creating ski area maps in apps.
 ## Adding to project
 todo
 
+Add the following permissions to your `AndroidManifest.xml`
+```xml
+<uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+<uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+<uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+<uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+```
+
 ## Main Map activity
-todo
+In order to use the LiveMapActivity you will need to have a class that implements the `getOtherIcon` function.
+The easiest way to do this is to declare a private inner class within your maps activity such as the following:
+```kotlin
+private inner class MyActiveMap(leftPadding: Int, topPadding: Int, rightPadding: Int, bottomPadding: Int):
+	LiveMapActivity(
+		this@MyMapActivity,
+		leftPadding, topPadding, rightPadding, bottomPadding,
+		CameraPosition.Builder().target(/*LatLng Here*/).tilt(/*Tilt here*/).bearing(/*Bearing here*/).zoom(/*Zoom here*/).build(),
+		LatLngBounds(/*Your pair of LatLng-s here*/),
+		R.raw.lifts, R.raw.green, R.raw.blue, R.raw.black, R.raw.double_black,
+		R.raw.starting_lift_polygons, R.raw.ending_lift_polygons, R.raw.green_polygons,
+		R.raw.blue_polygons, R.raw.black_polygons, R.raw.double_black_polygons, R.raw.other) {
+
+	override fun getOtherIcon(name: String): Int? {
+		TODO("Not yet implemented")
+	}
+	}
+```
+
+```kotlin
+class MyMapActivity : FragmentActivity() {
+	// ...
+	
+	private lateinit var map: MyActiveMap
+
+	// ...
+
+	override fun onCreate(savedInstanceState: Bundle?) {
+		// ...
+
+		// Get the padding for a full screen map if desired - this setup assumes your using databinding 
+		ViewCompat.setOnApplyWindowInsetsListener(binding.root) { v, insets ->
+			val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+			lpad = systemBars.left
+			tpad = systemBars.top
+			rpad = systemBars.right
+			bpad = systemBars.bottom
+
+			// Additional padding adjustments here...
+
+			insets
+		}
+
+		// ...
+
+		// Setup the map handler.
+		map = MyActiveMap(lpad, tpad, rpad, bpad)
+
+		//...
+
+	}
+
+	// ...
+
+	override fun onDestroy() {
+		// ...
+		map.destroy()
+		// ...
+		super.onDestroy()
+	}
+
+	// ...
+
+	override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>,
+	                                        grantResults: IntArray) {
+		super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+
+		when (requestCode) {
+
+			// If request is cancelled, the result arrays are empty.
+			LiveMapActivity.permissionValue -> {
+				if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+					map.launchLocationService()
+				}
+			}
+		}
+	}
+
+// ...
+
+}
+```
 
 ## Info Map activity
 

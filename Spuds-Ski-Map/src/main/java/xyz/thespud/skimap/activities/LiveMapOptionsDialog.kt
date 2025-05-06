@@ -5,7 +5,7 @@ import android.view.View
 import android.view.ViewGroup
 import xyz.thespud.skimap.R
 
-class LiveMapOptionsDialog(private val liveMapActivity: LiveMapActivity): MapOptionsDialog(
+open class LiveMapOptionsDialog(private val liveMapActivity: LiveMapActivity): MapOptionsDialog(
 	liveMapActivity.activity.layoutInflater, R.layout.live_map_options, liveMapActivity) {
 
 	private var locationTrackingButton: MapOptionItem? = null

@@ -9,13 +9,16 @@ import androidx.annotation.RawRes
 import androidx.fragment.app.FragmentActivity
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
+import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.Circle
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.Polyline
+import com.google.android.gms.maps.model.RoundCap
 import com.google.maps.android.ktx.addCircle
 import com.google.maps.android.ktx.addMarker
+import com.google.maps.android.ktx.addPolyline
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import xyz.thespud.skimap.R
@@ -24,12 +27,13 @@ import kotlin.math.roundToInt
 
 abstract class InfoMapActivity(
 	activity: FragmentActivity, val leftPadding: Int, val topPadding: Int, val rightPadding: Int,
-	val bottomPadding: Int, cameraBounds: LatLngBounds, @RawRes lifts: Int, @RawRes green: Int,
-	@RawRes blue: Int, @RawRes black: Int, @RawRes doubleBlack: Int, @RawRes starting_lifts_bounds: Int,
-	@RawRes ending_lifts_bounds: Int, @RawRes green_polygons: Int, @RawRes blue_polygons: Int,
-	@RawRes black_polygons: Int, @RawRes double_black_polygons: Int, @RawRes other: Int): MapHandler(
-	activity, cameraBounds, lifts, green, blue, black, doubleBlack, starting_lifts_bounds, ending_lifts_bounds,
-	green_polygons, blue_polygons, black_polygons, double_black_polygons, other), GoogleMap.InfoWindowAdapter {
+	val bottomPadding: Int, cameraPosition: CameraPosition, cameraBounds: LatLngBounds, @RawRes lifts: Int?,
+	@RawRes green: Int?, @RawRes blue: Int?, @RawRes black: Int?, @RawRes doubleBlack: Int?,
+	@RawRes starting_lifts_bounds: Int?, @RawRes ending_lifts_bounds: Int?, @RawRes green_polygons: Int?,
+	@RawRes blue_polygons: Int?, @RawRes black_polygons: Int?, @RawRes double_black_polygons: Int?,
+	@RawRes other: Int): MapHandler(activity, cameraPosition, cameraBounds, lifts, green, blue, black,
+	doubleBlack, starting_lifts_bounds, ending_lifts_bounds, green_polygons, blue_polygons, black_polygons,
+	double_black_polygons, other), GoogleMap.InfoWindowAdapter {
 
 	var circles: MutableList<Circle> = mutableListOf()
 
@@ -73,14 +77,51 @@ abstract class InfoMapActivity(
 
 		googleMap.setOnInfoWindowCloseListener { it.isVisible = false }
 
-		// The top and left padding are useless to us
-		// because the map is always at the bottom while in portrait and on the right in landscape
 		googleMap.setPadding(leftPadding, topPadding, rightPadding, bottomPadding)
 	}
 
 	override fun destroy() {
 		super.destroy()
 		clearMap()
+	}
+
+	@AnyThread
+	suspend fun addPolylinesToMap() = withContext(Dispatchers.Default) {
+		Log.d("addPolylinesToMap", "Started adding polylines to map")
+		var previousMapMarker: MapMarker? = null
+		val polylinePoints: MutableList<LatLng> = mutableListOf()
+
+		for (mapMarker in loadedMapMarkers) {
+			val location = LatLng(mapMarker.location.latitude, mapMarker.location.longitude)
+			polylinePoints.add(location)
+
+			if (previousMapMarker != null) {
+				if (previousMapMarker.color != mapMarker.color) {
+
+					val polyline = withContext(Dispatchers.Main) {
+						googleMap.addPolyline {
+							addAll(polylinePoints)
+							color(previousMapMarker!!.color)
+							zIndex(10.0F)
+							geodesic(true)
+							startCap(RoundCap())
+							endCap(RoundCap())
+							clickable(false)
+							width(8.0F)
+							visible(true)
+						}
+					}
+					polylines.add(polyline)
+					polylinePoints.clear()
+					polylinePoints.add(location)
+				}
+			}
+
+			previousMapMarker = mapMarker
+		}
+
+		System.gc()
+		Log.d("addPolylinesToMap", "Finished adding polylines to map")
 	}
 
 	/**

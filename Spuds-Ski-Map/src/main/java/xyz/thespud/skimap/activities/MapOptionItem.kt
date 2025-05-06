@@ -63,6 +63,22 @@ class MapOptionItem: LinearLayout {
 		}
 	}
 
+	constructor(context: Context, enabledDrawable: Drawable, disabledDrawable: Drawable,
+	            enabledText: CharSequence, disabledText: CharSequence, itemEnabled: Boolean = true): super(context, null,
+		0) {
+		inflate(context, R.layout.menu_dialog_entry, this)
+
+		icon = findViewById(R.id.menu_entry_icon)
+		text = findViewById(R.id.menu_entry_text)
+
+		this.enabledDrawable = enabledDrawable
+		this.disabledDrawable = disabledDrawable
+		this.enabledText = enabledText
+		this.disabledText = disabledText
+		this.itemEnabled = itemEnabled
+		toggleOptionVisibility()
+	}
+
 	@UiThread
 	fun toggleOptionVisibility() {
 
