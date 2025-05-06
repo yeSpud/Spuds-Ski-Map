@@ -101,23 +101,6 @@ open class SkierLocationService : Service(), LocationListener {
 
 		locationManager = manager
 
-		// FIXME Database setup here?
-		/*
-		val database = Room.databaseBuilder(this, Database::class.java, Database.NAME)
-			.allowMainThreadQueries().build()
-		databaseDao = database.skiingActivityDao()
-
-		val todaysDate: String = Database.getTodaysDate()
-		val longDate: String = Database.getLongDateFromLong(Date().time)
-
-		var skiingDateAndActivities = databaseDao.getSkiingDateWithActivitiesByShortDate(todaysDate)
-		while (skiingDateAndActivities == null) {
-			databaseDao.addSkiingDate(LongAndShortDate(longDate, todaysDate))
-			skiingDateAndActivities = databaseDao.getSkiingDateWithActivitiesByShortDate(todaysDate)
-		}
-		skiingDate = skiingDateAndActivities.skiingDate
-		 */
-
 		Toast.makeText(this, R.string.starting_tracking, Toast.LENGTH_SHORT).show()
 	}
 
@@ -151,55 +134,32 @@ open class SkierLocationService : Service(), LocationListener {
 			return
 		}
 
-		// FIXME Insert into the database here!
-		/*
-		val skiingActivity = SkiingActivity(
-			location.accuracy,
-			location.altitude,
-			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-				location.mslAltitudeAccuracyMeters
-			} else { null },
-			location.latitude,
-			location.longitude,
-			location.speed,
-			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-				location.speedAccuracyMetersPerSecond
-			} else { null },
-			location.time,
-			skiingDate.id
-		)
-		databaseDao.addSkiingActivity(skiingActivity)
-		 */
+		val callback = serviceCallbacks
+		if (callback == null) {
+			Log.w(tag, "Cannot update tracking notification - service callback is null")
+			Locations.updateLocations(location)
+			return
+		}
 
+		callback.onLocationUpdated(location)
 		Locations.updateLocations(location)
 
 		var mapMarker = localServiceCallback.getOnLocation(location)
 		if (mapMarker != null) {
-			displaySkiingActivity(R.string.current_chairlift, mapMarker)
+			SkiingNotification.displaySkiingActivity(this, callback, R.string.current_chairlift,
+				mapMarker)
 			return
 		}
 
 		mapMarker = localServiceCallback.getInLocation(location)
 		if (mapMarker != null) {
-			displaySkiingActivity(R.string.current_other, mapMarker)
+			SkiingNotification.displaySkiingActivity(this, callback, R.string.current_other,
+				mapMarker)
 			return
 		}
 
-
-		val callback = serviceCallbacks
-		if (callback != null) {
-			SkiingNotification.updateTrackingNotification(this, callback, getString(R.string.tracking_notice),
-				null)
-		} else {
-			Log.w(tag, "Cannot update tracking notification - service callback is null")
-		}
-	}
-
-	private fun displaySkiingActivity(@StringRes textResource: Int, mapMarker: MapMarker) {
-		val localServiceCallback = serviceCallbacks ?: return
-		val text: String = getString(textResource, mapMarker.name)
-		localServiceCallback.updateMapMarker(text)
-		SkiingNotification.updateTrackingNotification(this, localServiceCallback, text, mapMarker.icon)
+		SkiingNotification.updateTrackingNotification(this, callback, getString(R.string.tracking_notice),
+			null)
 	}
 
 	fun stopService() {

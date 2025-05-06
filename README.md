@@ -31,7 +31,7 @@ private inner class MyActiveMap(leftPadding: Int, topPadding: Int, rightPadding:
 	override fun getOtherIcon(name: String): Int? {
 		TODO("Not yet implemented")
 	}
-	}
+}
 ```
 
 ```kotlin
@@ -93,7 +93,7 @@ class MyMapActivity : FragmentActivity() {
 		}
 	}
 
-// ...
+	// ...
 
 }
 ```

@@ -19,6 +19,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.graphics.createBitmap
 import androidx.fragment.app.FragmentActivity
 import xyz.thespud.skimap.R
+import xyz.thespud.skimap.mapItem.MapMarker
 
 object SkiingNotification {
 
@@ -53,6 +54,13 @@ object SkiingNotification {
 	fun cancelTrackingNotification(context: Context) {
 		val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 		notificationManager.cancel(TRACKING_SERVICE_ID)
+	}
+
+	fun displaySkiingActivity(context: Context, serviceCallbacks: ServiceCallbacks, @StringRes textResource: Int,
+	                          mapMarker: MapMarker) {
+		val text: String = context.getString(textResource, mapMarker.name)
+		serviceCallbacks.updateMapMarker(text)
+		updateTrackingNotification(context, serviceCallbacks, text, mapMarker.icon)
 	}
 
 	fun updateTrackingNotification(context: Context, serviceCallbacks: ServiceCallbacks, title: String,

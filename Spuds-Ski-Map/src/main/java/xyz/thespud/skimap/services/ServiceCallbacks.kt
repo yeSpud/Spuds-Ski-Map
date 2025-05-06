@@ -3,7 +3,6 @@ package xyz.thespud.skimap.services
 import android.location.Location
 import androidx.fragment.app.FragmentActivity
 import xyz.thespud.skimap.mapItem.MapMarker
-import kotlin.reflect.KClass
 
 interface ServiceCallbacks {
 	fun isInBounds(location: Location): Boolean
@@ -19,4 +18,6 @@ interface ServiceCallbacks {
 	fun setManuallyDisabled(manuallyDisabled: Boolean)
 
 	fun getLaunchingActivity(): FragmentActivity
+
+	fun onLocationUpdated(location: Location)
 }
