@@ -4,10 +4,20 @@ This is an android library used for creating ski area maps in apps.
 ## Adding to project
 todo
 
-## Main map activity
+## Main Map activity
 todo
 
-### Options Dialog
+## Info Map activity
+
+## Included options dialog
+There are 2 included dialogs corresponding to each included map activity.
+
+### Live Map Options dialog
+Allows for starting and stopping location tracking
+
+### Info Map Options dialog
+Allows for hiding and showing location dots on the final map
+
 
 ## Location tracking service
 The location tracking service is called SkierLocationService, 

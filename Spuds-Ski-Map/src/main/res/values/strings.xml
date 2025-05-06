@@ -22,6 +22,27 @@
     <string name="activity_summary_notification_channel_name">Activity Summary</string>
     <string name="activity_notification_text">Tap here to view your activity summary</string>
 
+    <!-- Menu text -->
+    <string name="show_chairlifts">Show\nChairlifts\n</string>
+    <string name="hide_chairlifts">Hide\nChairlifts\n</string>
+    <string name="show_green">Show\nGreen\nRuns</string>
+    <string name="hide_green">Hide\nGreen\nRuns</string>
+    <string name="show_blue">Show\nBlue\nRuns</string>
+    <string name="hide_blue">Hide\nBlue\nRuns</string>
+    <string name="show_black">Show\nBlack\nRuns</string>
+    <string name="hide_black">Hide\nBlack\nRuns</string>
+    <string name="show_double_black">Show\nDouble Black Runs</string>
+    <string name="hide_double_black">Hide\nDouble Black Runs</string>
+    <string name="night_runs">Only Show\nNight\nRuns</string>
+    <string name="all_runs">Show\nAll\nRuns</string>
+    <string name="activity_summary">View\nactivity\nsummary</string>
+    <string name="hide_terrain">Hide\nTerrain\nParks</string>
+    <string name="show_terrain">Show\nTerrain\nParks</string>
+    <string name="stop_tracking">Stop\nLocation\nTracking</string>
+    <string name="start_tracking">Start\nLocation\nTracking</string>
+    <string name="show_dots">Show dots\nWARNING:\nVery Slow</string>
+    <string name="hide_dots">Hide dots</string>
+
     <!-- Toast text -->
     <string name="bounds_missing">Stopping location tracking due to missing bounds</string>
     <string name="out_of_bounds">Stopping location tracking as user is outside ski area bounds</string>

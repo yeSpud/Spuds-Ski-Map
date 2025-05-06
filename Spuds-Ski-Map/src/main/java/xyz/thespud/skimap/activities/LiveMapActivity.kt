@@ -24,7 +24,6 @@ import xyz.thespud.skimap.mapItem.Locations
 import xyz.thespud.skimap.mapItem.MapMarker
 import xyz.thespud.skimap.services.ServiceCallbacks
 import xyz.thespud.skimap.services.SkierLocationService
-import kotlin.reflect.KClass
 
 abstract class LiveMapActivity(
 	activity: FragmentActivity, val leftPadding: Int, val topPadding: Int, val rightPadding: Int,
@@ -39,13 +38,16 @@ abstract class LiveMapActivity(
 
 	var isMapSetup = false
 
-	private var skierLocationService: SkierLocationService? = null
+	var skierLocationService: SkierLocationService? = null
+	private set
 	private var bound = false
 
 	// Boolean used to determine if the user's precise location is enabled (and therefore accessible).
 	private var locationEnabled = false
 
-	private var isTrackingLocation = false
+	var manuallyDisabled = false
+	private set
+	var isTrackingLocation = false
 	private var locationTrackingButton: MapOptionItem? = null
 
 	private val serviceConnection = object : ServiceConnection {
@@ -155,6 +157,10 @@ abstract class LiveMapActivity(
 		if (button.itemEnabled != isTracking) {
 			button.toggleOptionVisibility()
 		}
+	}
+
+	override fun setManuallyDisabled(manuallyDisabled: Boolean) {
+		this.manuallyDisabled = manuallyDisabled
 	}
 
 	override fun getLaunchingActivity(): FragmentActivity {

@@ -45,6 +45,8 @@ abstract class MapHandler(val activity: FragmentActivity, val cameraBounds: LatL
 
 	internal lateinit var googleMap: GoogleMap
 
+	var isNightOnly = false
+
 	abstract val additionalCallback: OnMapReadyCallback
 
 	var chairliftPolylines: List<PolylineMapItem> = emptyList()

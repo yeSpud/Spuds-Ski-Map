@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.util.Log
 import android.view.View
 import android.widget.TextView
+import androidx.annotation.AnyThread
 import androidx.annotation.RawRes
 import androidx.fragment.app.FragmentActivity
 import com.google.android.gms.maps.GoogleMap
@@ -13,7 +14,10 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.Polyline
+import com.google.maps.android.ktx.addCircle
 import com.google.maps.android.ktx.addMarker
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import xyz.thespud.skimap.R
 import xyz.thespud.skimap.mapItem.MapMarker
 import kotlin.math.roundToInt
@@ -32,6 +36,10 @@ abstract class InfoMapActivity(
 	var polylines: MutableList<Polyline> = mutableListOf()
 
 	private var runMarker: Marker? = null
+
+	var showDots = false
+
+	var loadedMapMarkers: Array<MapMarker> = emptyArray()
 
 	@SuppressLint("PotentialBehaviorOverride")
 	override val additionalCallback: OnMapReadyCallback = OnMapReadyCallback {
@@ -73,6 +81,32 @@ abstract class InfoMapActivity(
 	override fun destroy() {
 		super.destroy()
 		clearMap()
+	}
+
+	/**
+	 * WARNING: This runs on the UI thread so it'll freeze the app while adding all the circles
+	 */
+	@AnyThread
+	suspend fun addCirclesToMap() = withContext(Dispatchers.Main) {
+		Log.d("addCirclesToMap", "Started adding circles to map")
+		for (mapMarker in loadedMapMarkers) {
+			val location = LatLng(mapMarker.location.latitude, mapMarker.location.longitude)
+
+			val circle = googleMap.addCircle { // FIXME this is using too much RAM & causes too much lag
+				center(location)
+				strokeColor(mapMarker.color)
+				fillColor(mapMarker.color)
+				clickable(true)
+				radius(3.0)
+				zIndex(50.0F)
+				visible(showDots)
+			}
+			circle.tag = mapMarker
+			circles.add(circle)
+		}
+
+		System.gc()
+		Log.d("addCirclesToMap", "Finished adding circles to map")
 	}
 
 	fun removeCircles() {
