@@ -16,11 +16,9 @@ import android.os.Bundle
 import android.os.IBinder
 import android.util.Log
 import android.widget.Toast
-import androidx.annotation.StringRes
 import androidx.core.app.ActivityCompat
 import xyz.thespud.skimap.R
 import xyz.thespud.skimap.mapItem.Locations
-import xyz.thespud.skimap.mapItem.MapMarker
 
 open class SkierLocationService : Service(), LocationListener {
 
@@ -35,7 +33,6 @@ open class SkierLocationService : Service(), LocationListener {
 	private lateinit var locationManager: LocationManager
 
 	override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-		val tag = "SkierLocationService"
 		Log.v(tag, "onStartCommand called!")
 		super.onStartCommand(intent, flags, startId)
 
@@ -51,28 +48,20 @@ open class SkierLocationService : Service(), LocationListener {
 		}
 		Log.v(tag, action)
 
-		val callback = serviceCallbacks
-		if (callback == null) {
-			Log.w(tag, "Service callback is null!")
-			return START_NOT_STICKY
-		}
-
 		when (action) {
 			START_TRACKING_INTENT -> {
 				Log.d(tag, "Starting foreground service")
 				val notification: Notification = SkiingNotification.createPersistentNotification(
-					this, callback.getLaunchingActivity(), "", null, "")
+					this, null, "", null, "")
 				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
 					startForeground(SkiingNotification.TRACKING_SERVICE_ID, notification,
 						ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION)
 				} else {
 					startForeground(SkiingNotification.TRACKING_SERVICE_ID, notification)
 				}
-				callback.setIsTracking(true)
 			}
 			STOP_TRACKING_INTENT -> {
 				Log.d(tag, "Stopping foreground service")
-				callback.setManuallyDisabled(true)
 				stopService()
 			}
 			else -> Log.w(tag, "Unknown intent action: $action")
@@ -82,13 +71,13 @@ open class SkierLocationService : Service(), LocationListener {
 	}
 
 	override fun onCreate() {
-		Log.v("SkierLocationService", "onCreate called!")
+		Log.v(tag, "onCreate called!")
 		super.onCreate()
 
 		// If we don't have permission to track user location somehow at this spot just return early.
 		if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
 			!= PackageManager.PERMISSION_GRANTED) {
-			Log.w("SkierLocationService", "Service started before permissions granted!")
+			Log.w(tag, "Service started before permissions granted!")
 			return
 		}
 
@@ -105,11 +94,12 @@ open class SkierLocationService : Service(), LocationListener {
 	}
 
 	fun setCallbacks(callbacks: ServiceCallbacks?) {
+		Log.v(tag, "Setting location callback")
 		serviceCallbacks = callbacks
 	}
 
 	override fun onDestroy() {
-		Log.v("SkierLocationService", "onDestroy has been called!")
+		Log.v(tag, "onDestroy has been called!")
 		super.onDestroy()
 
 		serviceCallbacks?.setIsTracking(false)
@@ -120,12 +110,15 @@ open class SkierLocationService : Service(), LocationListener {
 	}
 
 	override fun onLocationChanged(location: Location) {
-		val tag = "SkierLocationService"
 		Log.v(tag, "Location updated")
-		val localServiceCallback = serviceCallbacks ?: return
+		val serviceCallback = serviceCallbacks
+		if (serviceCallback == null) {
+			Log.w(tag, "Service callback is null")
+			return
+		}
 
 		// If we are not on the mountain stop the tracking.
-		if (!localServiceCallback.isInBounds(location)) {
+		if (!serviceCallback.isInBounds(location)) {
 			Toast.makeText(this, R.string.out_of_bounds,
 				Toast.LENGTH_LONG).show()
 			SkiingNotification.cancelTrackingNotification(this)
@@ -134,41 +127,29 @@ open class SkierLocationService : Service(), LocationListener {
 			return
 		}
 
-		val callback = serviceCallbacks
-		if (callback == null) {
-			Log.w(tag, "Cannot update tracking notification - service callback is null")
-			Locations.updateLocations(location)
-			return
-		}
-
-		callback.onLocationUpdated(location)
+		serviceCallback.onLocationUpdated(location)
 		Locations.updateLocations(location)
 
-		var mapMarker = localServiceCallback.getOnLocation(location)
+		var mapMarker = serviceCallback.getOnLocation(location)
 		if (mapMarker != null) {
-			SkiingNotification.displaySkiingActivity(this, callback, R.string.current_chairlift,
+			SkiingNotification.displaySkiingActivity(this, serviceCallback, R.string.current_chairlift,
 				mapMarker)
 			return
 		}
 
-		mapMarker = localServiceCallback.getInLocation(location)
+		mapMarker = serviceCallback.getInLocation(location)
 		if (mapMarker != null) {
-			SkiingNotification.displaySkiingActivity(this, callback, R.string.current_other,
+			SkiingNotification.displaySkiingActivity(this, serviceCallback, R.string.current_other,
 				mapMarker)
 			return
 		}
 
-		SkiingNotification.updateTrackingNotification(this, callback, getString(R.string.tracking_notice),
+		SkiingNotification.updateTrackingNotification(this, serviceCallback, getString(R.string.tracking_notice),
 			null)
 	}
 
 	fun stopService() {
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-			stopForeground(STOP_FOREGROUND_REMOVE)
-		} else {
-			@Suppress("DEPRECATION")
-			stopForeground(true)
-		}
+		stopForeground(STOP_FOREGROUND_REMOVE)
 		stopSelf()
 	}
 
@@ -184,6 +165,8 @@ open class SkierLocationService : Service(), LocationListener {
 	override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {}
 
 	companion object {
+
+		const val tag = "SkierLocationService"
 
 		const val STOP_TRACKING_INTENT = "xyz.thespud.skimap.SkierLocationService.Stop"
 

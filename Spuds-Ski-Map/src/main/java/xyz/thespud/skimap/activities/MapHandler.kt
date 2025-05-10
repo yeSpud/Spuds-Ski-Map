@@ -1,12 +1,10 @@
 package xyz.thespud.skimap.activities
 
-import android.os.Build
 import android.util.Log
 import androidx.annotation.AnyThread
 import androidx.annotation.ColorRes
 import androidx.annotation.DrawableRes
 import androidx.annotation.RawRes
-import androidx.core.content.res.ResourcesCompat
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -28,7 +26,6 @@ import com.google.maps.android.ktx.addPolyline
 import com.google.maps.android.ktx.utils.kml.kmlLayer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import xyz.thespud.skimap.R
@@ -312,7 +309,7 @@ abstract class MapHandler(val activity: FragmentActivity, val cameraPosition: Ca
 
 	private fun parseKmlFile(@RawRes file: Int): Iterable<KmlPlacemark> {
 		val kml = kmlLayer(googleMap, file, activity)
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && kml.placemarks.spliterator().estimateSize() == 0L) {
+		if (kml.placemarks.spliterator().estimateSize() == 0L) {
 			Log.w("parseKmlFile", "No placemarks in kml file!")
 		}
 		return kml.placemarks
@@ -336,7 +333,7 @@ abstract class MapHandler(val activity: FragmentActivity, val cameraPosition: Ca
 				val coordinates: ArrayList<LatLng> = lineString.geometryObject
 
 				// Get the color of the polyline.
-				val argb = getARGB(color)
+				val argb = activity.getColor(color)
 
 				// Get the properties of the polyline.
 				val polylineProperties: List<String>? = if (placemark.hasProperty(PROPERTY_KEY)) {
@@ -400,7 +397,7 @@ abstract class MapHandler(val activity: FragmentActivity, val cameraPosition: Ca
 
 			val kmlPolygon: KmlPolygon = placemark.geometry as KmlPolygon
 
-			val argb = getARGB(color)
+			val argb = activity.getColor(color)
 
 			val polygon = withContext(Dispatchers.Main) {
 				googleMap.addPolygon {
@@ -448,14 +445,6 @@ abstract class MapHandler(val activity: FragmentActivity, val cameraPosition: Ca
 			}
 			return@withContext mapItems
 		}
-
-	private fun getARGB(@ColorRes color: Int): Int {
-		return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-			activity.getColor(color)
-		} else {
-			ResourcesCompat.getColor(activity.resources, color, null)
-		}
-	}
 
 	companion object {
 

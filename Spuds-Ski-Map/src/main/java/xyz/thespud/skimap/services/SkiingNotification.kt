@@ -1,11 +1,13 @@
 package xyz.thespud.skimap.services
 
+import android.Manifest
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.drawable.BitmapDrawable
@@ -15,7 +17,9 @@ import android.util.Log
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.appcompat.content.res.AppCompatResources
+import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 import androidx.core.graphics.createBitmap
 import androidx.fragment.app.FragmentActivity
 import xyz.thespud.skimap.R
@@ -27,6 +31,8 @@ object SkiingNotification {
 
 	const val ACTIVITY_SUMMARY_ID = 420
 
+	const val NOTIFICATION_PERMISSION = 1231
+
 	const val ACTIVITY_SUMMARY_LAUNCH_DATE = "activitySummaryLaunchDate"
 
 	const val TRACKING_SERVICE_CHANNEL_ID = "skiAppTracker"
@@ -37,18 +43,16 @@ object SkiingNotification {
 	fun setupNotificationChannels(context: Context) {
 		val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-			val trackingNotificationChannel = NotificationChannel(
-				TRACKING_SERVICE_CHANNEL_ID,
-				context.getString(R.string.tracking_notification_channel_name), NotificationManager.IMPORTANCE_LOW)
+		val trackingNotificationChannel = NotificationChannel(
+			TRACKING_SERVICE_CHANNEL_ID,
+			context.getString(R.string.tracking_notification_channel_name), NotificationManager.IMPORTANCE_LOW)
 
-			val progressNotificationChannel = NotificationChannel(
-				ACTIVITY_SUMMARY_CHANNEL_ID,
-				context.getString(R.string.activity_summary_notification_channel_name), NotificationManager.IMPORTANCE_DEFAULT)
+		val progressNotificationChannel = NotificationChannel(
+			ACTIVITY_SUMMARY_CHANNEL_ID,
+			context.getString(R.string.activity_summary_notification_channel_name), NotificationManager.IMPORTANCE_DEFAULT)
 
-			notificationManager.createNotificationChannels(listOf(trackingNotificationChannel, progressNotificationChannel))
-			Log.v("onCreate", "Created new notification channel")
-		}
+		notificationManager.createNotificationChannels(listOf(trackingNotificationChannel, progressNotificationChannel))
+		Log.v("setupNotificationChannels", "Created new notification channel")
 	}
 
 	fun cancelTrackingNotification(context: Context) {
@@ -65,7 +69,7 @@ object SkiingNotification {
 
 	fun updateTrackingNotification(context: Context, serviceCallbacks: ServiceCallbacks, title: String,
 	                               @DrawableRes icon: Int?) {
-
+		Log.v("updateTrackingNotification", "updateTrackingNotification called!")
 		val bitmap: Bitmap? = if (icon != null) {
 			drawableToBitmap(AppCompatResources.getDrawable(context, icon)!!)
 		} else {
@@ -78,30 +82,31 @@ object SkiingNotification {
 		val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
 		// Make sure we arent setting the same notification
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-			for (shownNotification in notificationManager.activeNotifications) {
-				val shownNotificationText = shownNotification.notification.extras.getString(
-					Notification.EXTRA_TEXT)
-				val notificationText = notification.extras.getString(Notification.EXTRA_TEXT)
-				if (shownNotificationText == notificationText) {
-					return
-				}
+		for (shownNotification in notificationManager.activeNotifications) {
+			val shownNotificationText = shownNotification.notification.extras.getString(Notification.EXTRA_TEXT)
+			val notificationText = notification.extras.getString(Notification.EXTRA_TEXT)
+			if (shownNotificationText == notificationText) {
+				return
 			}
+			Log.d("updateTrackingNotification", "Setting notification text to: $notificationText")
 		}
 		notificationManager.notify(TRACKING_SERVICE_ID, notification)
 	}
 
-	fun createPersistentNotification(context: Context, activityToLaunch: FragmentActivity, title: String,
+	fun createPersistentNotification(context: Context, activityToLaunch: FragmentActivity?, title: String,
 	                                         iconBitmap: Bitmap?, fileToOpen: String): Notification {
 
 		val stopIntent = Intent(context, SkierLocationService::class.java)
 		stopIntent.action = SkierLocationService.STOP_TRACKING_INTENT
 
-		val notificationIntent = Intent(context, activityToLaunch::class.java)
-		notificationIntent.putExtra(ACTIVITY_SUMMARY_LAUNCH_DATE, fileToOpen)
+		var pendingIntent: PendingIntent? = null
+		if (activityToLaunch != null) {
+			val notificationIntent = Intent(context, activityToLaunch::class.java)
+			notificationIntent.putExtra(ACTIVITY_SUMMARY_LAUNCH_DATE, fileToOpen)
 
-		val pendingIntent: PendingIntent = PendingIntent.getActivity(context, 0,
-			notificationIntent, PendingIntent.FLAG_IMMUTABLE)
+			pendingIntent = PendingIntent.getActivity(context, 0, notificationIntent,
+				PendingIntent.FLAG_IMMUTABLE)
+		}
 
 		val builder: NotificationCompat.Builder = getNotificationBuilder(context, TRACKING_SERVICE_CHANNEL_ID,
 			false, R.string.tracking_notice, pendingIntent)
@@ -117,7 +122,7 @@ object SkiingNotification {
 	}
 
 	private fun getNotificationBuilder(context: Context, channelId: String, showTime: Boolean,
-	                                   @StringRes titleText: Int, pendingIntent: PendingIntent):
+	                                   @StringRes titleText: Int, pendingIntent: PendingIntent?):
 			NotificationCompat.Builder {
 
 		return NotificationCompat.Builder(context, channelId)

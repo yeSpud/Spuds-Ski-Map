@@ -10,11 +10,13 @@ import android.content.ServiceConnection
 import android.content.pm.PackageManager
 import android.location.Location
 import android.location.LocationManager
+import android.os.Build
 import android.os.IBinder
 import android.os.Process
 import android.util.Log
 import androidx.annotation.RawRes
 import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.model.CameraPosition
@@ -27,6 +29,7 @@ import xyz.thespud.skimap.mapItem.Locations
 import xyz.thespud.skimap.mapItem.MapMarker
 import xyz.thespud.skimap.services.ServiceCallbacks
 import xyz.thespud.skimap.services.SkierLocationService
+import xyz.thespud.skimap.services.SkiingNotification.NOTIFICATION_PERMISSION
 
 abstract class LiveMapActivity(
 	activity: FragmentActivity, val leftPadding: Int, val topPadding: Int, val rightPadding: Int,
@@ -57,13 +60,22 @@ abstract class LiveMapActivity(
 			val binder = service as SkierLocationService.LocalBinder
 			skierLocationService = binder.getService()
 			bound = true
+			Log.v("serviceConnection", "Skier location service bound")
 			skierLocationService!!.setCallbacks(this@LiveMapActivity)
 			setIsTracking(true)
 		}
 
 		override fun onServiceDisconnected(name: ComponentName?) {
+
+			if (locationMarker != null) {
+				Log.v("serviceConnection", "Removing location marker")
+				locationMarker!!.remove()
+				locationMarker = null
+			}
+
 			skierLocationService!!.setCallbacks(null)
 			activity.unbindService(this)
+			Log.v("serviceConnection", "Skier location service unbound")
 			skierLocationService = null
 			setIsTracking(false)
 			bound = false
@@ -103,12 +115,6 @@ abstract class LiveMapActivity(
 	}
 
 	override fun destroy() {
-
-		if (locationMarker != null) {
-			Log.v("LiveMapActivity", "Removing location marker")
-			locationMarker!!.remove()
-			locationMarker = null
-		}
 
 		if (bound) {
 			skierLocationService!!.setCallbacks(null)
@@ -164,6 +170,7 @@ abstract class LiveMapActivity(
 	}
 
 	override fun setIsTracking(isTracking: Boolean) {
+		Log.d("setIsTracking", "Setting location tracking to $isTracking")
 		isTrackingLocation = isTracking
 
 		val button = locationTrackingButton ?: return
@@ -173,6 +180,7 @@ abstract class LiveMapActivity(
 	}
 
 	override fun setManuallyDisabled(manuallyDisabled: Boolean) {
+		Log.d("setManuallyDisabled", "Setting manually disabled to $manuallyDisabled")
 		this.manuallyDisabled = manuallyDisabled
 	}
 
@@ -181,6 +189,15 @@ abstract class LiveMapActivity(
 	}
 
 	fun launchLocationService() {
+
+		if (ContextCompat.checkSelfPermission(activity, Manifest.permission.POST_NOTIFICATIONS)
+			== PackageManager.PERMISSION_DENIED) {
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+				ActivityCompat.requestPermissions(activity, arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+					NOTIFICATION_PERMISSION
+				)
+			}
+		}
 
 		val locationManager: LocationManager = activity.getSystemService(Context.LOCATION_SERVICE) as LocationManager
 		if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
