@@ -20,4 +20,7 @@ interface ServiceCallbacks {
 	fun getLaunchingActivity(): FragmentActivity
 
 	fun onLocationUpdated(location: Location)
+
+	fun onTrackingStopped()
+
 }

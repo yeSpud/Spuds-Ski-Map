@@ -3,10 +3,12 @@ package xyz.thespud.skimap.activities
 import android.util.Log
 import android.view.View
 import android.view.ViewGroup
+import androidx.annotation.LayoutRes
 import xyz.thespud.skimap.R
 
-open class LiveMapOptionsDialog(private val liveMapActivity: LiveMapActivity): MapOptionsDialog(
-	liveMapActivity.activity.layoutInflater, R.layout.live_map_options_v2, liveMapActivity) {
+open class LiveMapOptionsDialog(private val liveMapActivity: LiveMapActivity,
+                                @LayoutRes menu: Int = R.layout.live_map_options_v2): MapOptionsDialog(
+	liveMapActivity.activity.layoutInflater, menu, liveMapActivity) {
 
 	private var locationTrackingButton: MapOptionItem? = null
 

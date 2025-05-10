@@ -22,6 +22,7 @@ import xyz.thespud.skimap.mapItem.Locations
 
 open class SkierLocationService : Service(), LocationListener {
 
+	// FIXME Memory leak here
 	private var binder: IBinder? = LocalBinder()
 
 	private var serviceCallbacks: ServiceCallbacks? = null
@@ -33,26 +34,26 @@ open class SkierLocationService : Service(), LocationListener {
 	private lateinit var locationManager: LocationManager
 
 	override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-		Log.v(tag, "onStartCommand called!")
+		Log.v(TAG, "onStartCommand called!")
 		super.onStartCommand(intent, flags, startId)
 
 		if (intent == null) {
-			Log.w(tag, "SkierLocationService started without intent")
+			Log.w(TAG, "SkierLocationService started without intent")
 			return START_NOT_STICKY
 		}
 
 		val action = intent.action
 		if (action == null) {
-			Log.w(tag, "SkierLocationService intent missing action")
+			Log.w(TAG, "SkierLocationService intent missing action")
 			return START_NOT_STICKY
 		}
-		Log.v(tag, action)
+		Log.v(TAG, action)
 
 		when (action) {
 			START_TRACKING_INTENT -> {
-				Log.d(tag, "Starting foreground service")
-				val notification: Notification = SkiingNotification.createPersistentNotification(
-					this, null, "", null, "")
+				Log.d(TAG, "Starting foreground service")
+				val notification: Notification = SkiingNotification.createTrackingNotification(
+					this, null, "", null)
 				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
 					startForeground(SkiingNotification.TRACKING_SERVICE_ID, notification,
 						ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION)
@@ -61,23 +62,23 @@ open class SkierLocationService : Service(), LocationListener {
 				}
 			}
 			STOP_TRACKING_INTENT -> {
-				Log.d(tag, "Stopping foreground service")
+				Log.d(TAG, "Stopping foreground service")
 				stopService()
 			}
-			else -> Log.w(tag, "Unknown intent action: $action")
+			else -> Log.w(TAG, "Unknown intent action: $action")
 		}
 
 		return START_NOT_STICKY
 	}
 
 	override fun onCreate() {
-		Log.v(tag, "onCreate called!")
+		Log.v(TAG, "onCreate called!")
 		super.onCreate()
 
 		// If we don't have permission to track user location somehow at this spot just return early.
 		if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
 			!= PackageManager.PERMISSION_GRANTED) {
-			Log.w(tag, "Service started before permissions granted!")
+			Log.w(TAG, "Service started before permissions granted!")
 			return
 		}
 
@@ -94,12 +95,12 @@ open class SkierLocationService : Service(), LocationListener {
 	}
 
 	fun setCallbacks(callbacks: ServiceCallbacks?) {
-		Log.v(tag, "Setting location callback")
+		Log.v(TAG, "Setting location callback")
 		serviceCallbacks = callbacks
 	}
 
 	override fun onDestroy() {
-		Log.v(tag, "onDestroy has been called!")
+		Log.v(TAG, "onDestroy has been called!")
 		super.onDestroy()
 
 		serviceCallbacks?.setIsTracking(false)
@@ -110,10 +111,10 @@ open class SkierLocationService : Service(), LocationListener {
 	}
 
 	override fun onLocationChanged(location: Location) {
-		Log.v(tag, "Location updated")
+		Log.v(TAG, "Location updated")
 		val serviceCallback = serviceCallbacks
 		if (serviceCallback == null) {
-			Log.w(tag, "Service callback is null")
+			Log.w(TAG, "Service callback is null")
 			return
 		}
 
@@ -122,7 +123,7 @@ open class SkierLocationService : Service(), LocationListener {
 			Toast.makeText(this, R.string.out_of_bounds,
 				Toast.LENGTH_LONG).show()
 			SkiingNotification.cancelTrackingNotification(this)
-			Log.d(tag, "Stopping location tracking service")
+			Log.d(TAG, "Stopping location tracking service")
 			stopService()
 			return
 		}
@@ -149,6 +150,7 @@ open class SkierLocationService : Service(), LocationListener {
 	}
 
 	fun stopService() {
+		serviceCallbacks?.onTrackingStopped()
 		stopForeground(STOP_FOREGROUND_REMOVE)
 		stopSelf()
 	}
@@ -166,7 +168,7 @@ open class SkierLocationService : Service(), LocationListener {
 
 	companion object {
 
-		const val tag = "SkierLocationService"
+		const val TAG = "SkierLocationService"
 
 		const val STOP_TRACKING_INTENT = "xyz.thespud.skimap.SkierLocationService.Stop"
 

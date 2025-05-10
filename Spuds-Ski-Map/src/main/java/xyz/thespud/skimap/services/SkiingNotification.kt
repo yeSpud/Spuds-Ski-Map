@@ -1,29 +1,25 @@
 package xyz.thespud.skimap.services
 
-import android.Manifest
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
-import android.os.Build
 import android.util.Log
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.appcompat.content.res.AppCompatResources
-import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
-import androidx.core.content.ContextCompat
 import androidx.core.graphics.createBitmap
 import androidx.fragment.app.FragmentActivity
 import xyz.thespud.skimap.R
 import xyz.thespud.skimap.mapItem.MapMarker
+import kotlin.reflect.KClass
 
 object SkiingNotification {
 
@@ -76,8 +72,8 @@ object SkiingNotification {
 			null
 		}
 
-		val notification: Notification = createPersistentNotification(context, serviceCallbacks.getLaunchingActivity(),
-			title, bitmap, "")
+		val activity = serviceCallbacks.getLaunchingActivity()
+		val notification: Notification = createTrackingNotification(context, activity, title, bitmap)
 
 		val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
@@ -93,26 +89,34 @@ object SkiingNotification {
 		notificationManager.notify(TRACKING_SERVICE_ID, notification)
 	}
 
-	fun createPersistentNotification(context: Context, activityToLaunch: FragmentActivity?, title: String,
-	                                         iconBitmap: Bitmap?, fileToOpen: String): Notification {
+	fun createActivityNotification(context: Context, activityToLaunch: KClass<out FragmentActivity>,
+	                               @DrawableRes icon: Int, fileToOpen: String): Notification {
+		val notificationIntent = Intent(context, activityToLaunch::class.java)
+		notificationIntent.putExtra(ACTIVITY_SUMMARY_LAUNCH_DATE, fileToOpen)
 
-		val stopIntent = Intent(context, SkierLocationService::class.java)
-		stopIntent.action = SkierLocationService.STOP_TRACKING_INTENT
+		val pendingIntent = PendingIntent.getActivity(context, 0, notificationIntent,
+			PendingIntent.FLAG_IMMUTABLE)
 
+		val builder: NotificationCompat.Builder = getNotificationBuilder(context, ACTIVITY_SUMMARY_CHANNEL_ID,
+			icon, true, R.string.activity_notification_text, pendingIntent)
+
+		return builder.build()
+	}
+
+	fun createTrackingNotification(context: Context, activityToLaunch: FragmentActivity?, title: String,
+	                               iconBitmap: Bitmap?): Notification {
 		var pendingIntent: PendingIntent? = null
 		if (activityToLaunch != null) {
 			val notificationIntent = Intent(context, activityToLaunch::class.java)
-			notificationIntent.putExtra(ACTIVITY_SUMMARY_LAUNCH_DATE, fileToOpen)
-
 			pendingIntent = PendingIntent.getActivity(context, 0, notificationIntent,
 				PendingIntent.FLAG_IMMUTABLE)
 		}
 
+		val icon = context.applicationInfo.icon
 		val builder: NotificationCompat.Builder = getNotificationBuilder(context, TRACKING_SERVICE_CHANNEL_ID,
-			false, R.string.tracking_notice, pendingIntent)
+			icon, false, R.string.tracking_notice, pendingIntent)
 			.setContentText(title)
-			.addAction(0, "Stop Tracking", PendingIntent.getService(context, 0,
-				stopIntent, PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE))
+			.addAction(getStopButton(context))
 
 		if (iconBitmap != null) {
 			builder.setLargeIcon(iconBitmap)
@@ -121,12 +125,21 @@ object SkiingNotification {
 		return builder.build()
 	}
 
-	private fun getNotificationBuilder(context: Context, channelId: String, showTime: Boolean,
-	                                   @StringRes titleText: Int, pendingIntent: PendingIntent?):
+	private fun getStopButton(context: Context): NotificationCompat.Action {
+		val stopIntent = Intent(context, SkierLocationService::class.java)
+		stopIntent.action = SkierLocationService.STOP_TRACKING_INTENT
+
+		val pendingIntent = PendingIntent.getService(context, 0, stopIntent,
+			PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+		return NotificationCompat.Action(0, "Stop Tracking", pendingIntent)
+	}
+
+	private fun getNotificationBuilder(context: Context, channelId: String, @DrawableRes icon: Int,
+	                                   showTime: Boolean, @StringRes titleText: Int, pendingIntent: PendingIntent?):
 			NotificationCompat.Builder {
 
 		return NotificationCompat.Builder(context, channelId)
-			.setSmallIcon(context.applicationInfo.icon)
+			.setSmallIcon(icon) // context.applicationInfo.icon
 			.setShowWhen(showTime)
 			.setContentTitle(context.getString(titleText))
 			.setContentIntent(pendingIntent)

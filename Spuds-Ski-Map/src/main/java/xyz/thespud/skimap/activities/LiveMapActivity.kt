@@ -73,7 +73,7 @@ abstract class LiveMapActivity(
 				locationMarker = null
 			}
 
-			skierLocationService!!.setCallbacks(null)
+			skierLocationService?.setCallbacks(null)
 			activity.unbindService(this)
 			Log.v("serviceConnection", "Skier location service unbound")
 			skierLocationService = null
@@ -117,7 +117,7 @@ abstract class LiveMapActivity(
 	override fun destroy() {
 
 		if (bound) {
-			skierLocationService!!.setCallbacks(null)
+			skierLocationService?.setCallbacks(null)
 			activity.unbindService(serviceConnection)
 			skierLocationService = null
 			isTrackingLocation = false
