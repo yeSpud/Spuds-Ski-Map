@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<GridLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/dark_blue"
+    android:columnCount="3"
+    android:useDefaultMargins="true"
+    android:padding="@dimen/menu_edge_margin">
+
+    <xyz.thespud.skimap.activities.MapOptionItem
+        android:id="@+id/show_chairlift"
+        android:layout_width="@dimen/menu_image_size"
+        android:layout_height="wrap_content"
+
+        android:layout_columnWeight="1"
+        android:layout_gravity="center"
+
+        app:enabled_menu_icon="@drawable/ic_chairlift"
+        app:enabled_menu_title="@string/show_chairlifts"
+        app:disabled_menu_icon="@drawable/ic_chairlift_disabled"
+        app:disabled_menu_title="@string/hide_chairlifts" />
+
+
+    <xyz.thespud.skimap.activities.MapOptionItem
+        android:id="@+id/show_green_runs"
+        android:layout_width="@dimen/menu_image_size"
+        android:layout_height="wrap_content"
+
+        android:layout_columnWeight="1"
+        android:layout_gravity="center"
+
+        app:enabled_menu_icon="@drawable/ic_green"
+        app:enabled_menu_title="@string/show_green"
+        app:disabled_menu_icon="@drawable/ic_green_disabled"
+        app:disabled_menu_title="@string/hide_green" />
+
+    <xyz.thespud.skimap.activities.MapOptionItem
+        android:id="@+id/show_blue_runs"
+        android:layout_width="@dimen/menu_image_size"
+        android:layout_height="wrap_content"
+
+        android:layout_columnWeight="1"
+        android:layout_gravity="center"
+
+        app:enabled_menu_icon="@drawable/ic_blue"
+        app:enabled_menu_title="@string/show_blue"
+        app:disabled_menu_icon="@drawable/ic_blue_disabled"
+        app:disabled_menu_title="@string/hide_blue" />
+
+    <xyz.thespud.skimap.activities.MapOptionItem
+        android:id="@+id/show_black_runs"
+        android:layout_width="@dimen/menu_image_size"
+        android:layout_height="wrap_content"
+
+        android:layout_columnWeight="1"
+        android:layout_gravity="center"
+
+        app:enabled_menu_icon="@drawable/ic_black"
+        app:enabled_menu_title="@string/show_black"
+        app:disabled_menu_icon="@drawable/ic_black_disabled"
+        app:disabled_menu_title="@string/hide_black" />
+
+    <xyz.thespud.skimap.activities.MapOptionItem
+        android:id="@+id/show_double_black_runs"
+        android:layout_width="@dimen/menu_image_size"
+        android:layout_height="wrap_content"
+
+        android:layout_columnWeight="1"
+        android:layout_gravity="center"
+
+        app:disabled_menu_icon="@drawable/ic_missing"
+        app:disabled_menu_title="@string/hide_double_black"
+        app:enabled_menu_icon="@drawable/ic_missing"
+        app:enabled_menu_title="@string/show_double_black" />
+
+    <xyz.thespud.skimap.activities.MapOptionItem
+        android:id="@+id/show_terrain_parks"
+        android:layout_width="@dimen/menu_image_size"
+        android:layout_height="wrap_content"
+
+        android:layout_columnWeight="1"
+        android:layout_gravity="center"
+
+        app:disabled_menu_icon="@drawable/ic_terrain_park_disabled"
+        app:disabled_menu_title="@string/hide_terrain"
+        app:enabled_menu_icon="@drawable/ic_terrain_park"
+        app:enabled_menu_title="@string/show_terrain" />
+
+    <xyz.thespud.skimap.activities.MapOptionItem
+        android:id="@+id/show_night_runs"
+        android:layout_width="@dimen/menu_image_size"
+        android:layout_height="wrap_content"
+
+        android:layout_columnWeight="1"
+        android:layout_gravity="center"
+
+        app:enabled_menu_icon="@drawable/ic_night"
+        app:enabled_menu_title="@string/night_runs"
+        app:disabled_menu_icon="@drawable/ic_sun"
+        app:disabled_menu_title="@string/all_runs" />
+
+    <xyz.thespud.skimap.activities.MapOptionItem
+        android:id="@+id/toggle_location_tracking"
+        android:layout_width="@dimen/menu_image_size"
+        android:layout_height="wrap_content"
+
+        android:layout_columnWeight="1"
+        android:layout_gravity="center"
+
+        app:enabled_menu_icon="@drawable/ic_pause"
+        app:enabled_menu_title="@string/stop_tracking"
+        app:disabled_menu_icon="@drawable/ic_play"
+        app:disabled_menu_title="@string/start_tracking" />
+
+</GridLayout>

@@ -4,14 +4,10 @@ This is an android library used for creating ski area maps in apps.
 ## Adding to project
 todo
 
-Add the following permissions to your `AndroidManifest.xml`
+If you want to use the included skier location service for tracking the user's location in the background add the following under the application tag in the android manifest:
 ```xml
-<uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
-<uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
-<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-<uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
-<uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+<service android:name="xyz.thespud.skimap.services.SkierLocationService"
+    android:foregroundServiceType="location" />
 ```
 
 ## Main Map activity
@@ -29,7 +25,13 @@ private inner class MyActiveMap(leftPadding: Int, topPadding: Int, rightPadding:
 		R.raw.blue_polygons, R.raw.black_polygons, R.raw.double_black_polygons, R.raw.other) {
 
 	override fun getOtherIcon(name: String): Int? {
-		TODO("Not yet implemented")
+		// Use this function to assign icons to "other" locations on the map (such as lodges, parking lots, etc.)
+		// It returns a drawable resource ID, or null if none exists
+		return null
+	}
+
+	override fun onLocationUpdated(location: Location) {
+		// Use this function for when you want to do something with the user's new location
 	}
 }
 ```
