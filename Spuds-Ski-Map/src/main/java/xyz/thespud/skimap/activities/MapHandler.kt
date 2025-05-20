@@ -26,20 +26,21 @@ import com.google.maps.android.ktx.addPolyline
 import com.google.maps.android.ktx.utils.kml.kmlLayer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import xyz.thespud.skimap.R
 import xyz.thespud.skimap.mapItem.Locations
 import xyz.thespud.skimap.mapItem.MapItem
 import xyz.thespud.skimap.mapItem.PolylineMapItem
+import xyz.thespud.skimap.mapItem.SkiRuns
 
-abstract class MapHandler(val activity: FragmentActivity, val cameraPosition: CameraPosition,
-                          val cameraBounds: LatLngBounds, @RawRes val lifts: Int?, @RawRes val green: Int?,
-                          @RawRes val blue: Int?, @RawRes val black: Int?, @RawRes val doubleBlack: Int?,
-                          @RawRes val starting_lifts_bounds: Int?, @RawRes val ending_lifts_bounds: Int?,
-                          @RawRes val green_polygons: Int?, @RawRes val blue_polygons: Int?,
-                          @RawRes val black_polygons: Int?, @RawRes val double_black_polygons: Int?,
-                          @RawRes val other: Int, private val drawOpaqueRuns: Boolean = false): OnMapReadyCallback {
+abstract class MapHandler(val activity: FragmentActivity,
+                          private val leftPadding: Int, private val topPadding: Int,
+                          private val rightPadding: Int, private val bottomPadding: Int,
+                          private val cameraPosition: CameraPosition,
+                          private val cameraBounds: LatLngBounds?, private val skiRuns: SkiRuns,
+                          private val drawOpaqueRuns: Boolean = false): OnMapReadyCallback {
 
 	internal lateinit var googleMap: GoogleMap
 
@@ -119,7 +120,6 @@ abstract class MapHandler(val activity: FragmentActivity, val cameraPosition: Ca
 	 * installed Google Play services and returned to the app.
 	 */
 	override fun onMapReady(map: GoogleMap) {
-
 		val tag = "onMapReady"
 
 		Log.v(tag, "Setting up map for the first time...")
@@ -148,163 +148,176 @@ abstract class MapHandler(val activity: FragmentActivity, val cameraPosition: Ca
 		googleMap.mapType = GoogleMap.MAP_TYPE_SATELLITE
 
 		// Load the various polylines onto the map.
-		activity.lifecycleScope.launch(Dispatchers.Default) {
+		activity.lifecycleScope.launch(Dispatchers.Default) { drawPolylines() }
 
-			val jobs = mutableListOf<Job>()
+		googleMap.setPadding(leftPadding, topPadding, rightPadding, bottomPadding)
 
-			if (lifts != null) {
-				jobs.add(launch {
-					Log.d(tag, "Loading chairlift polyline")
-					val chairliftColor = if (drawOpaqueRuns) {
-						R.color.chairlift_opaque
-					} else {
-						R.color.chairlift
-					}
-					chairliftPolylines = loadPolylines(lifts, chairliftColor, 4f, Locations.chairliftIcon)
-					Log.d(tag, "Finished loading chairlift polyline")
-				})
-			}
+		Log.d("onMapReady", "Running additional setup steps...")
+		additionalCallback.onMapReady(googleMap)
+		Log.d("onMapReady", "Finished setting up map.")
+	}
 
-			if (green != null) {
-				jobs.add(launch {
-					Log.d(tag, "Loading green run polylines")
-					val greenColor = if (drawOpaqueRuns) {
-						R.color.green_opaque
-					} else {
-						R.color.green
-					}
-					greenRunPolylines = loadPolylines(green, greenColor, 3f, Locations.greenIcon)
-					Log.d(tag, "Finished loading green run polylines")
-				})
-			}
+	private suspend fun drawPolylines() = coroutineScope {
+		val tag = "drawPolylines"
+		val jobs = mutableListOf<Job>()
+		Log.v(tag, "Started drawing polylines and polygons")
 
-			if (blue != null) {
-				jobs.add(launch {
-					Log.d(tag, "Loading blue run polylines")
-					val blueColor = if (drawOpaqueRuns) {
-						R.color.blue_opaque
-					} else {
-						R.color.blue
-					}
-					blueRunPolylines = loadPolylines(blue, blueColor, 2f, Locations.blueIcon)
-					Log.d(tag, "Finished loading blue run polylines")
-				})
-			}
-
-			if (black != null) {
-				jobs.add(launch {
-					Log.d(tag, "Loading black run polylines")
-					val blackColor = if (drawOpaqueRuns) {
-						R.color.black_opaque
-					} else {
-						R.color.black
-					}
-					blackRunPolylines = loadPolylines(black, blackColor, 1f, Locations.blackIcon)
-					Log.d(tag, "Finished loading black run polylines")
-				})
-			}
-
-			if (doubleBlack != null) {
-				jobs.add(launch {
-					Log.d(tag, "Loading double black run polylines")
-					val blackColor = if (drawOpaqueRuns) {
-						R.color.black_opaque
-					} else {
-						R.color.black
-					}
-					doubleBlackRunPolylines = loadPolylines(doubleBlack, blackColor, 1f,
-						Locations.doubleBlackIcon)
-					Log.d(tag, "Finished loading double black run polylines")
-				})
-			}
-
-			if (starting_lifts_bounds != null) {
-				jobs.add(launch {
-					Log.d(tag, "Adding starting chairlift terminals")
-					startingChairliftTerminals = loadMapItems(starting_lifts_bounds, R.color.chairlift_polygon,
-						Locations.chairliftIcon)
-					Log.d(tag, "Finished adding ending chairlift terminals")
-				})
-			}
-
-			if (ending_lifts_bounds != null) {
-				jobs.add(launch {
-					Log.d(tag, "Adding ending chairlift terminals")
-					endingChairliftTerminals = loadMapItems(ending_lifts_bounds, R.color.chairlift_polygon,
-						Locations.chairliftIcon)
-					Log.d(tag, "Finished adding ending chairlift terminals")
-				})
-			}
-
-			if (green_polygons != null) {
-				jobs.add(launch {
-					Log.d(tag, "Adding green bounds")
-					greenRunBounds = loadMapItems(green_polygons, R.color.green_polygon, Locations.greenIcon)
-					Log.d(tag, "Finished adding green bounds")
-				})
-			}
-
-			if (blue_polygons != null) {
-				jobs.add(launch {
-					Log.d(tag, "Adding blue bounds")
-					blueRunBounds = loadMapItems(blue_polygons, R.color.blue_polygon, Locations.blueIcon)
-					Log.d(tag, "Finished adding blue bounds")
-				})
-			}
-
-			if (black_polygons != null) {
-				jobs.add(launch {
-					Log.d(tag, "Adding black bounds")
-					blackRunBounds = loadMapItems(black_polygons, R.color.black_polygon, Locations.blackIcon)
-					Log.d(tag, "Finished adding black bounds")
-				})
-			}
-
-			if (double_black_polygons != null) {
-				jobs.add(launch {
-					Log.d(tag, "Adding double black bounds")
-					blackRunBounds = loadMapItems(double_black_polygons, R.color.black_polygon,
-						Locations.doubleBlackIcon)
-					Log.d(tag, "Finished adding double black bounds")
-				})
-			}
-
-			// Other bounds are REQUIRED because it contains the ski area bounds
+		val liftsPolyline = skiRuns.liftsPolyline
+		if (liftsPolyline != null) {
 			jobs.add(launch {
-				Log.d(tag, "Adding other bounds")
-				val other = loadPolygons(other, R.color.other_polygon_fill)
-				val bounds = mutableListOf<MapItem>()
-				for (name in other.keys) {
-					val values = other[name]!!
-					val polygonPoints: MutableList<List<LatLng>> = mutableListOf()
-					for (value in values) {
-						withContext(Dispatchers.Main) { polygonPoints.add(value.points) }
-					}
-
-					if (name == "Ski Area Bounds") {
-						withContext(Dispatchers.Main) { values[0].remove() }
-						skiAreaBounds = MapItem(name, polygonPoints)
-						continue
-					}
-
-					Log.d(tag, "Getting icon for $name")
-					val icon = getOtherIcon(name)
-					bounds.add(MapItem(name, polygonPoints, icon))
+				Log.d(tag, "Loading chairlift polyline")
+				val chairliftColor = if (drawOpaqueRuns) {
+					R.color.chairlift_opaque
+				} else {
+					R.color.chairlift
 				}
-				otherBounds = bounds
-				Log.d(tag, "Finished adding other bounds")
+				chairliftPolylines = loadPolylines(liftsPolyline, chairliftColor, 4f, Locations.chairliftIcon)
+				Log.d(tag, "Finished loading chairlift polyline")
 			})
-
-			jobs.forEach { it.join() }
-			System.gc()
-
-			val callbackJob = launch(Dispatchers.Main) {
-				Log.d("onMapReady", "Running additional setup steps...")
-				additionalCallback.onMapReady(googleMap)
-				Log.d("onMapReady", "Finished setting up map.")
-			}
-			callbackJob.join()
 		}
+
+		val greenPolylines = skiRuns.greenRunPolylines
+		if (greenPolylines != null) {
+			jobs.add(launch {
+				Log.d(tag, "Loading green run polylines")
+				val greenColor = if (drawOpaqueRuns) {
+					R.color.green_opaque
+				} else {
+					R.color.green
+				}
+				greenRunPolylines = loadPolylines(greenPolylines, greenColor, 3f, Locations.greenIcon)
+				Log.d(tag, "Finished loading green run polylines")
+			})
+		}
+
+		val bluePolylines = skiRuns.blueRunPolylines
+		if (bluePolylines != null) {
+			jobs.add(launch {
+				Log.d(tag, "Loading blue run polylines")
+				val blueColor = if (drawOpaqueRuns) {
+					R.color.blue_opaque
+				} else {
+					R.color.blue
+				}
+				blueRunPolylines = loadPolylines(bluePolylines, blueColor, 2f, Locations.blueIcon)
+				Log.d(tag, "Finished loading blue run polylines")
+			})
+		}
+
+		val blackPolylines = skiRuns.blackRunPolylines
+		if (blackPolylines != null) {
+			jobs.add(launch {
+				Log.d(tag, "Loading black run polylines")
+				val blackColor = if (drawOpaqueRuns) {
+					R.color.black_opaque
+				} else {
+					R.color.black
+				}
+				blackRunPolylines = loadPolylines(blackPolylines, blackColor, 1f, Locations.blackIcon)
+				Log.d(tag, "Finished loading black run polylines")
+			})
+		}
+
+		val doubleBlackPolylines = skiRuns.doubleBlackRunPolylines
+		if (doubleBlackPolylines != null) {
+			jobs.add(launch {
+				Log.d(tag, "Loading double black run polylines")
+				val blackColor = if (drawOpaqueRuns) {
+					R.color.black_opaque
+				} else {
+					R.color.black
+				}
+				doubleBlackRunPolylines = loadPolylines(doubleBlackPolylines, blackColor, 1f,
+					Locations.doubleBlackIcon)
+				Log.d(tag, "Finished loading double black run polylines")
+			})
+		}
+
+		val startingLiftBounds = skiRuns.startingLiftBounds
+		if (startingLiftBounds != null) {
+			jobs.add(launch {
+				Log.d(tag, "Adding starting chairlift terminals")
+				startingChairliftTerminals = loadMapItems(startingLiftBounds, R.color.chairlift_polygon,
+					Locations.chairliftIcon)
+				Log.d(tag, "Finished adding ending chairlift terminals")
+			})
+		}
+
+		val endingLiftPolylines = skiRuns.endingLiftPolylines
+		if (endingLiftPolylines != null) {
+			jobs.add(launch {
+				Log.d(tag, "Adding ending chairlift terminals")
+				endingChairliftTerminals = loadMapItems(endingLiftPolylines, R.color.chairlift_polygon,
+					Locations.chairliftIcon)
+				Log.d(tag, "Finished adding ending chairlift terminals")
+			})
+		}
+
+		val greenBounds = skiRuns.greenRunBounds
+		if (greenBounds != null) {
+			jobs.add(launch {
+				Log.d(tag, "Adding green bounds")
+				greenRunBounds = loadMapItems(greenBounds, R.color.green_polygon, Locations.greenIcon)
+				Log.d(tag, "Finished adding green bounds")
+			})
+		}
+
+		val blueBounds = skiRuns.blueRunBounds
+		if (blueBounds != null) {
+			jobs.add(launch {
+				Log.d(tag, "Adding blue bounds")
+				blueRunBounds = loadMapItems(blueBounds, R.color.blue_polygon, Locations.blueIcon)
+				Log.d(tag, "Finished adding blue bounds")
+			})
+		}
+
+		val blackBounds = skiRuns.blackRunBounds
+		if (blackBounds != null) {
+			jobs.add(launch {
+				Log.d(tag, "Adding black bounds")
+				blackRunBounds = loadMapItems(blackBounds, R.color.black_polygon, Locations.blackIcon)
+				Log.d(tag, "Finished adding black bounds")
+			})
+		}
+
+		val doubleBlackBounds = skiRuns.doubleBlackRunBounds
+		if (doubleBlackBounds != null) {
+			jobs.add(launch {
+				Log.d(tag, "Adding double black bounds")
+				blackRunBounds = loadMapItems(doubleBlackBounds, R.color.black_polygon, Locations.doubleBlackIcon)
+				Log.d(tag, "Finished adding double black bounds")
+			})
+		}
+
+		// Other bounds are REQUIRED because it contains the ski area bounds
+		jobs.add(launch {
+			Log.d(tag, "Adding other bounds")
+			val other = loadPolygons(skiRuns.other, R.color.other_polygon_fill)
+			val bounds = mutableListOf<MapItem>()
+			for (name in other.keys) {
+				val values = other[name]!!
+				val polygonPoints: MutableList<List<LatLng>> = mutableListOf()
+				for (value in values) {
+					withContext(Dispatchers.Main) { polygonPoints.add(value.points) }
+				}
+
+				if (name == "Ski Area Bounds") {
+					withContext(Dispatchers.Main) { values[0].remove() }
+					skiAreaBounds = MapItem(name, polygonPoints)
+					continue
+				}
+
+				Log.d(tag, "Getting icon for $name")
+				val icon = getOtherIcon(name)
+				bounds.add(MapItem(name, polygonPoints, icon))
+			}
+			otherBounds = bounds
+			Log.d(tag, "Finished adding other bounds")
+		})
+
+		jobs.forEach { it.join() }
+		System.gc()
+		Log.v(tag, "Finished drawing polylines and polygons")
 	}
 
 	private fun parseKmlFile(@RawRes file: Int): Iterable<KmlPlacemark> {

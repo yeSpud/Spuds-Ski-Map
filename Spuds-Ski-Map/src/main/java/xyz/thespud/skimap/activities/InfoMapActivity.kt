@@ -5,7 +5,6 @@ import android.util.Log
 import android.view.View
 import android.widget.TextView
 import androidx.annotation.AnyThread
-import androidx.annotation.RawRes
 import androidx.fragment.app.FragmentActivity
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
@@ -23,17 +22,14 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import xyz.thespud.skimap.R
 import xyz.thespud.skimap.mapItem.MapMarker
+import xyz.thespud.skimap.mapItem.SkiRuns
 import kotlin.math.roundToInt
 
-abstract class InfoMapActivity(
-	activity: FragmentActivity, val leftPadding: Int, val topPadding: Int, val rightPadding: Int,
-	val bottomPadding: Int, cameraPosition: CameraPosition, cameraBounds: LatLngBounds, @RawRes lifts: Int?,
-	@RawRes green: Int?, @RawRes blue: Int?, @RawRes black: Int?, @RawRes doubleBlack: Int?,
-	@RawRes starting_lifts_bounds: Int?, @RawRes ending_lifts_bounds: Int?, @RawRes green_polygons: Int?,
-	@RawRes blue_polygons: Int?, @RawRes black_polygons: Int?, @RawRes double_black_polygons: Int?,
-	@RawRes other: Int): MapHandler(activity, cameraPosition, cameraBounds, lifts, green, blue, black,
-	doubleBlack, starting_lifts_bounds, ending_lifts_bounds, green_polygons, blue_polygons, black_polygons,
-	double_black_polygons, other), GoogleMap.InfoWindowAdapter {
+abstract class InfoMapActivity(activity: FragmentActivity,
+                               leftPadding: Int, topPadding: Int, rightPadding: Int, bottomPadding: Int,
+                               cameraPosition: CameraPosition, cameraBounds: LatLngBounds, skiRuns: SkiRuns):
+	MapHandler(activity, leftPadding, topPadding, rightPadding, bottomPadding, cameraPosition,
+		cameraBounds, skiRuns), GoogleMap.InfoWindowAdapter {
 
 	var circles: MutableList<Circle> = mutableListOf()
 
@@ -76,8 +72,6 @@ abstract class InfoMapActivity(
 		}
 
 		googleMap.setOnInfoWindowCloseListener { it.isVisible = false }
-
-		googleMap.setPadding(leftPadding, topPadding, rightPadding, bottomPadding)
 	}
 
 	override fun destroy() {

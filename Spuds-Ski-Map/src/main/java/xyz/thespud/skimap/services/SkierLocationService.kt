@@ -19,13 +19,14 @@ import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import xyz.thespud.skimap.R
 import xyz.thespud.skimap.mapItem.Locations
+import java.lang.ref.WeakReference
 
 open class SkierLocationService : Service(), LocationListener {
 
 	// FIXME Memory leak here
-	private var binder: IBinder? = LocalBinder()
+	private var binder: WeakReference<IBinder>? = WeakReference(LocalBinder())
 
-	private var serviceCallbacks: ServiceCallbacks? = null
+	private var serviceCallbacks: WeakReference<ServiceCallbacks>? = null
 
 	inner class LocalBinder: Binder() {
 		fun getService(): SkierLocationService = this@SkierLocationService
@@ -96,14 +97,19 @@ open class SkierLocationService : Service(), LocationListener {
 
 	fun setCallbacks(callbacks: ServiceCallbacks?) {
 		Log.v(TAG, "Setting location callback")
-		serviceCallbacks = callbacks
+		serviceCallbacks = WeakReference(callbacks)
 	}
 
 	override fun onDestroy() {
 		Log.v(TAG, "onDestroy has been called!")
 		super.onDestroy()
 
-		serviceCallbacks?.setIsTracking(false)
+		val serviceCallbackReference = serviceCallbacks
+		if (serviceCallbackReference != null) {
+			val serviceCallback = serviceCallbackReference.get()
+			serviceCallback?.setIsTracking(false)
+		}
+
 		locationManager.removeUpdates(this)
 		SkiingNotification.cancelTrackingNotification(this)
 
@@ -112,7 +118,13 @@ open class SkierLocationService : Service(), LocationListener {
 
 	override fun onLocationChanged(location: Location) {
 		Log.v(TAG, "Location updated")
-		val serviceCallback = serviceCallbacks
+		val serviceCallbackReference = serviceCallbacks
+		if (serviceCallbackReference == null) {
+			Log.w(TAG, "Service callback reference is null")
+			return
+		}
+
+		val serviceCallback = serviceCallbackReference.get()
 		if (serviceCallback == null) {
 			Log.w(TAG, "Service callback is null")
 			return
@@ -150,13 +162,13 @@ open class SkierLocationService : Service(), LocationListener {
 	}
 
 	fun stopService() {
-		serviceCallbacks?.onTrackingStopped()
+		serviceCallbacks?.get()?.onTrackingStopped()
 		stopForeground(STOP_FOREGROUND_REMOVE)
 		stopSelf()
 	}
 
 	override fun onBind(intent: Intent?): IBinder? {
-		return binder
+		return binder?.get()
 	}
 
 	override fun onProviderEnabled(provider: String) {}

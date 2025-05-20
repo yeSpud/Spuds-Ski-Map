@@ -14,7 +14,6 @@ import android.os.Build
 import android.os.IBinder
 import android.os.Process
 import android.util.Log
-import androidx.annotation.RawRes
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
@@ -27,19 +26,16 @@ import com.google.maps.android.ktx.addMarker
 import xyz.thespud.skimap.R
 import xyz.thespud.skimap.mapItem.Locations
 import xyz.thespud.skimap.mapItem.MapMarker
+import xyz.thespud.skimap.mapItem.SkiRuns
 import xyz.thespud.skimap.services.ServiceCallbacks
 import xyz.thespud.skimap.services.SkierLocationService
 import xyz.thespud.skimap.services.SkiingNotification.NOTIFICATION_PERMISSION
 
-abstract class LiveMapActivity(
-	activity: FragmentActivity, val leftPadding: Int, val topPadding: Int, val rightPadding: Int,
-	val bottomPadding: Int, cameraPosition: CameraPosition, cameraBounds: LatLngBounds, @RawRes lifts: Int?,
-	@RawRes green: Int?, @RawRes blue: Int?, @RawRes black: Int?, @RawRes doubleBlack: Int?,
-	@RawRes starting_lifts_bounds: Int?, @RawRes ending_lifts_bounds: Int?, @RawRes green_polygons: Int?,
-	@RawRes blue_polygons: Int?, @RawRes black_polygons: Int?, @RawRes double_black_polygons: Int?,
-	@RawRes other: Int): MapHandler(activity, cameraPosition, cameraBounds, lifts, green, blue, black,
-	doubleBlack, starting_lifts_bounds, ending_lifts_bounds, green_polygons, blue_polygons, black_polygons,
-	double_black_polygons, other), ServiceCallbacks {
+abstract class LiveMapActivity(activity: FragmentActivity,
+                               leftPadding: Int, topPadding: Int, rightPadding: Int, bottomPadding: Int,
+                               cameraPosition: CameraPosition, cameraBounds: LatLngBounds, skiRuns: SkiRuns):
+	MapHandler(activity, leftPadding, topPadding, rightPadding, bottomPadding, cameraPosition,
+		cameraBounds, skiRuns), ServiceCallbacks {
 
 	private var locationMarker: Marker? = null
 
