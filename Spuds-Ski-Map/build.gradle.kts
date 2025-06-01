@@ -1,7 +1,11 @@
 plugins {
 	alias(libs.plugins.android.library)
 	alias(libs.plugins.kotlin.android)
-	`maven-publish`
+	id("com.vanniktech.maven.publish") version "0.28.0" apply false
+	id("com.gradleup.nmcp") version "0.0.7" apply false
+	//`maven-publish` -- maven central does not yet fully support uploading by this plugin
+	// signing
+
 }
 
 android {
@@ -32,13 +36,15 @@ android {
 		jvmTarget = "11"
 	}
 
+	/*
 	publishing {
 		singleVariant("release") {
 			withSourcesJar()
 		}
-	}
+	}*/
 }
 
+/*
 publishing {
 	publications {
 		register<MavenPublication>("release") {
@@ -49,6 +55,7 @@ publishing {
 			afterEvaluate {
 				from(components["release"])
 			}
+
 			pom {
 				name = "Spud's Ski Map"
 				description = "An android library for setting up ski maps with Google Maps"
@@ -68,7 +75,17 @@ publishing {
 			}
 		}
 	}
+	repositories {
+		maven {
+			url = uri("")
+		}
+	}
 }
+
+signing {
+	sign(publishing.publications["release"])
+}
+ */
 
 dependencies {
 	implementation(libs.androidx.core.ktx)
