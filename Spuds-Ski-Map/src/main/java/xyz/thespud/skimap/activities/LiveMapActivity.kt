@@ -33,7 +33,7 @@ import xyz.thespud.skimap.services.SkiingNotification.NOTIFICATION_PERMISSION
 
 abstract class LiveMapActivity(activity: FragmentActivity,
                                leftPadding: Int, topPadding: Int, rightPadding: Int, bottomPadding: Int,
-                               cameraPosition: CameraPosition, cameraBounds: LatLngBounds, skiRuns: SkiRuns):
+                               cameraPosition: CameraPosition, cameraBounds: LatLngBounds?, skiRuns: SkiRuns):
 	MapHandler(activity, leftPadding, topPadding, rightPadding, bottomPadding, cameraPosition,
 		cameraBounds, skiRuns), ServiceCallbacks {
 
@@ -132,12 +132,12 @@ abstract class LiveMapActivity(activity: FragmentActivity,
 
 	override fun getOnLocation(location: Location): MapMarker? {
 
-		var mapMarker = Locations.checkIfIOnChairlift(startingChairliftTerminals, endingChairliftTerminals)
+		var mapMarker = Locations.checkIfIOnChairlift(this)
 		if (mapMarker != null) {
 			return mapMarker
 		}
 
-		mapMarker = Locations.checkIfOnRun(greenRunBounds, blueRunBounds, blackRunBounds, doubleBlackRunBounds)
+		mapMarker = Locations.checkIfOnRun(this)
 		if (mapMarker != null) {
 			return mapMarker
 		}
@@ -146,7 +146,7 @@ abstract class LiveMapActivity(activity: FragmentActivity,
 	}
 
 	override fun getInLocation(location: Location): MapMarker? {
-		return Locations.checkIfOnOther(otherBounds)
+		return Locations.checkIfOnOther(this)
 	}
 
 	override fun updateMapMarker(locationString: String) {

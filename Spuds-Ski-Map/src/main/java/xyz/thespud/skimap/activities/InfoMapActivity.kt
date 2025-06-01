@@ -27,7 +27,7 @@ import kotlin.math.roundToInt
 
 abstract class InfoMapActivity(activity: FragmentActivity,
                                leftPadding: Int, topPadding: Int, rightPadding: Int, bottomPadding: Int,
-                               cameraPosition: CameraPosition, cameraBounds: LatLngBounds, skiRuns: SkiRuns):
+                               cameraPosition: CameraPosition, cameraBounds: LatLngBounds?, skiRuns: SkiRuns):
 	MapHandler(activity, leftPadding, topPadding, rightPadding, bottomPadding, cameraPosition,
 		cameraBounds, skiRuns), GoogleMap.InfoWindowAdapter {
 

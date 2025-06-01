@@ -6,6 +6,7 @@ import android.util.Log
 import androidx.annotation.DrawableRes
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import xyz.thespud.skimap.R
+import xyz.thespud.skimap.activities.MapHandler
 
 object Locations {
 
@@ -34,14 +35,14 @@ object Locations {
 		currentLocation = newLocation
 	}
 
-	fun checkIfOnOther(otherBounds: List<MapItem>): MapMarker? {
+	fun checkIfOnOther(map: MapHandler): MapMarker? {
 		val location = currentLocation
 		if (location == null) {
 			Log.w("checkIfOnOther", "Other map items have not been set up")
 			return null
 		}
 
-		for (other in otherBounds) {
+		for (other in map.otherBounds) {
 			if (other.locationInsidePoints(location)) {
 
 				return when (other.icon) {
@@ -68,8 +69,8 @@ object Locations {
 		return null
 	}
 
-	private fun isInStartingTerminal(startingChairliftBounds: List<MapItem>): String? {
-		for (startingChairlift in startingChairliftBounds) {
+	private fun isInStartingTerminal(map: MapHandler): String? {
+		for (startingChairlift in map.startingChairliftTerminals) {
 			if (startingChairlift.locationInsidePoints(currentLocation!!)) {
 				return startingChairlift.name
 			}
@@ -78,8 +79,8 @@ object Locations {
 		return null
 	}
 
-	private fun isInEndingTerminal(endingChairliftBounds: List<MapItem>): String? {
-		for (endingChairlift in endingChairliftBounds) {
+	private fun isInEndingTerminal(map: MapHandler): String? {
+		for (endingChairlift in map.endingChairliftTerminals) {
 			if (endingChairlift.locationInsidePoints(currentLocation!!)) {
 				return endingChairlift.name
 			}
@@ -88,8 +89,7 @@ object Locations {
 		return null
 	}
 
-	fun checkIfIOnChairlift(startingChairliftBounds: List<MapItem>,
-	                        endingChairliftBounds: List<MapItem>): MapMarker? {
+	fun checkIfIOnChairlift(map: MapHandler): MapMarker? {
 		val location = currentLocation
 		if (location == null) {
 			Log.w("checkIfIOnChairlift", "Chairlifts have not been set up")
@@ -98,13 +98,13 @@ object Locations {
 
 		var name: String? = null
 
-		val startingTerminal = isInStartingTerminal(startingChairliftBounds)
+		val startingTerminal = isInStartingTerminal(map)
 		if (startingTerminal != null) {
 			isOnChairlift = startingTerminal
 			name = startingTerminal
 		}
 
-		val endingTerminal = isInEndingTerminal(endingChairliftBounds)
+		val endingTerminal = isInEndingTerminal(map)
 		if (endingTerminal != null) {
 			isOnChairlift = null
 			name = endingTerminal
@@ -122,41 +122,40 @@ object Locations {
 			BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED), Color.RED)
 	}
 
-	fun checkIfOnRun(greenRunsBounds: List<MapItem>, blueRunsBounds: List<MapItem>,
-	                 blackRunsBounds: List<MapItem>, doubleBlackRunBounds: List<MapItem>): MapMarker? {
+	fun checkIfOnRun(map: MapHandler): MapMarker? {
 		val location = currentLocation
 		if (location == null) {
 			Log.w("checkIfOnRun", "Ski runs have not been set up")
 			return null
 		}
 
-		for (easyRunBounds in greenRunsBounds) {
-			if (easyRunBounds.locationInsidePoints(location)) {
-				return MapMarker(easyRunBounds.name, location, greenIcon,
+		for (greenRun in map.greenRunBounds) {
+			if (greenRun.locationInsidePoints(location)) {
+				return MapMarker(greenRun.name, location, greenIcon,
 					BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN),
 					Color.GREEN)
 			}
 		}
 
-		for (moderateRunBounds in blueRunsBounds) {
-			if (moderateRunBounds.locationInsidePoints(location)) {
-				return MapMarker(moderateRunBounds.name, location, blueIcon,
+		for (blueRun in map.blueRunBounds) {
+			if (blueRun.locationInsidePoints(location)) {
+				return MapMarker(blueRun.name, location, blueIcon,
 					BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE),
 					Color.BLUE)
 			}
 		}
 
-		for (difficultRunBounds in blackRunsBounds) {
-			if (difficultRunBounds.locationInsidePoints(location)) {
-				return MapMarker(difficultRunBounds.name, location, blackIcon,
+		for (blackRun in map.blackRunBounds) {
+			if (blackRun.locationInsidePoints(location)) {
+				return MapMarker(blackRun.name, location, blackIcon,
 					BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE),
 					Color.BLACK)
 			}
 		}
 
-		for (doubleBlackRunBound in doubleBlackRunBounds) {
-			if (doubleBlackRunBound.locationInsidePoints(location)) {
-				return MapMarker(doubleBlackRunBound.name, location, doubleBlackIcon,
+		for (doubleBlackRun in map.doubleBlackRunBounds) {
+			if (doubleBlackRun.locationInsidePoints(location)) {
+				return MapMarker(doubleBlackRun.name, location, doubleBlackIcon,
 					BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE),
 					Color.BLACK)
 			}

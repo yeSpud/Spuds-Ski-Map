@@ -53,8 +53,20 @@ open class SkierLocationService : Service(), LocationListener {
 		when (action) {
 			START_TRACKING_INTENT -> {
 				Log.d(TAG, "Starting foreground service")
-				val notification: Notification = SkiingNotification.createTrackingNotification(
-					this, null, "", null)
+
+				var appIcon = applicationInfo.icon
+				val serviceCallbackReference = serviceCallbacks
+				if (serviceCallbackReference != null) {
+					val serviceCallback = serviceCallbackReference.get()
+					if (serviceCallback != null) {
+						val activity = serviceCallback.getLaunchingActivity()
+						appIcon = activity.applicationInfo.icon
+					}
+				}
+
+				val notification: Notification = SkiingNotification.createTrackingNotification(this,
+					null, appIcon, "", null)
+
 				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
 					startForeground(SkiingNotification.TRACKING_SERVICE_ID, notification,
 						ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION)
@@ -143,22 +155,23 @@ open class SkierLocationService : Service(), LocationListener {
 		serviceCallback.onLocationUpdated(location)
 		Locations.updateLocations(location)
 
+		val activity = serviceCallback.getLaunchingActivity()
 		var mapMarker = serviceCallback.getOnLocation(location)
 		if (mapMarker != null) {
-			SkiingNotification.displaySkiingActivity(this, serviceCallback, R.string.current_chairlift,
-				mapMarker)
+			SkiingNotification.displaySkiingActivity(this, serviceCallback, activity.applicationInfo.icon,
+				R.string.current_chairlift, mapMarker)
 			return
 		}
 
 		mapMarker = serviceCallback.getInLocation(location)
 		if (mapMarker != null) {
-			SkiingNotification.displaySkiingActivity(this, serviceCallback, R.string.current_other,
-				mapMarker)
+			SkiingNotification.displaySkiingActivity(this, serviceCallback, activity.applicationInfo.icon,
+				R.string.current_other, mapMarker)
 			return
 		}
 
-		SkiingNotification.updateTrackingNotification(this, serviceCallback, getString(R.string.tracking_notice),
-			null)
+		SkiingNotification.updateTrackingNotification(this, serviceCallback, activity.applicationInfo.icon,
+			getString(R.string.tracking_notice), null)
 	}
 
 	fun stopService() {
