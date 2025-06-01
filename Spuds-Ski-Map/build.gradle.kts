@@ -1,11 +1,10 @@
+import com.vanniktech.maven.publish.SonatypeHost
+
 plugins {
 	alias(libs.plugins.android.library)
 	alias(libs.plugins.kotlin.android)
-	id("com.vanniktech.maven.publish") version "0.28.0" apply false
-	id("com.gradleup.nmcp") version "0.0.7" apply false
-	//`maven-publish` -- maven central does not yet fully support uploading by this plugin
-	// signing
-
+	id("com.vanniktech.maven.publish") version "0.32.0"
+	signing
 }
 
 android {
@@ -35,57 +34,12 @@ android {
 	kotlinOptions {
 		jvmTarget = "11"
 	}
-
-	/*
-	publishing {
-		singleVariant("release") {
-			withSourcesJar()
-		}
-	}*/
 }
 
-/*
-publishing {
-	publications {
-		register<MavenPublication>("release") {
-			groupId = "xyz.thespud"
-			artifactId = "spuds-ski-map"
-			version = "2025.06.01"
-
-			afterEvaluate {
-				from(components["release"])
-			}
-
-			pom {
-				name = "Spud's Ski Map"
-				description = "An android library for setting up ski maps with Google Maps"
-				url = "https://github.com/yeSpud/Spuds-Ski-Map"
-				licenses {
-					license {
-						name = "MIT License"
-						url = "https://github.com/yeSpud/Spuds-Ski-Map/blob/main/LICENSE"
-					}
-				}
-				developers {
-					developer {
-						id = "yeSpud"
-						name = "Spud"
-					}
-				}
-			}
-		}
-	}
-	repositories {
-		maven {
-			url = uri("")
-		}
-	}
+mavenPublishing {
+	publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL, true)
+	signAllPublications()
 }
-
-signing {
-	sign(publishing.publications["release"])
-}
- */
 
 dependencies {
 	implementation(libs.androidx.core.ktx)
