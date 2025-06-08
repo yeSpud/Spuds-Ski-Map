@@ -163,4 +163,9 @@ object Locations {
 
 		return null
 	}
+
+	fun resetLocations() {
+		currentLocation = null
+		previousLocation = null
+	}
 }
