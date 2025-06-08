@@ -103,6 +103,20 @@ object SkiingNotification {
 		return builder.build()
 	}
 
+	fun createActivityNotification(context: Context, activityToLaunch: KClass<out FragmentActivity>,
+	                               @DrawableRes icon: Int, fileToOpen: Int): Notification {
+		val notificationIntent = Intent(context, activityToLaunch::class.java)
+		notificationIntent.putExtra(ACTIVITY_SUMMARY_LAUNCH_DATE, fileToOpen)
+
+		val pendingIntent = PendingIntent.getActivity(context, 0, notificationIntent,
+			PendingIntent.FLAG_IMMUTABLE)
+
+		val builder: NotificationCompat.Builder = getNotificationBuilder(context, ACTIVITY_SUMMARY_CHANNEL_ID,
+			icon, true, R.string.activity_notification_text, pendingIntent)
+
+		return builder.build()
+	}
+
 	fun createTrackingNotification(context: Context, activityToLaunch: FragmentActivity?, @DrawableRes appIcon: Int,
 	                               title: String, iconBitmap: Bitmap?): Notification {
 		var pendingIntent: PendingIntent? = null
