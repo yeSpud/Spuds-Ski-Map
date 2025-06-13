@@ -79,6 +79,7 @@ abstract class LiveMapActivity(activity: FragmentActivity,
 	}
 
 	override val additionalCallback: OnMapReadyCallback = OnMapReadyCallback {
+		Log.v("additionalCallback", "additionalCallback called for LiveMapActivity")
 
 		// Determine if the user has enabled location permissions.
 		val locationEnabled = activity.checkPermission(Manifest.permission.ACCESS_FINE_LOCATION, Process.myPid(),
