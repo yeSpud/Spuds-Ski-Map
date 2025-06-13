@@ -39,12 +39,6 @@ private inner class MyActiveMap(leftPadding: Int, topPadding: Int, rightPadding:
 	CameraPosition.Builder().target(/*LatLng Here*/).tilt(/*Tilt here*/).bearing(/*Bearing here*/).zoom(/*Zoom here*/).build(), 
 	LatLngBounds(/*Your pair of LatLng-s here - or null if there are no camera bounds*/), 
 	skiRuns) {
-
-	override val additionalCallback: OnMapReadyCallback = OnMapReadyCallback {
-		super.additionalCallback
-		// Override this callback to run any additional steps when the map is ready.
-		// Otherwise this can be excluded.
-	}
 	
 	override fun getOtherIcon(name: String): Int? {
 		// Use this function to assign icons to "other" locations on the map (such as lodges, parking lots, etc.)
@@ -143,12 +137,6 @@ private inner class MyInfoMap(lpad: Int, tpad: Int, rpad: Int, bpad: Int, skiRun
 		CameraPosition.Builder().target(/*LatLng Here*/).tilt(/*Tilt here*/).bearing(/*Bearing here*/).zoom(/*Zoom here*/).build(),
 		LatLngBounds(/*Your pair of LatLng-s here - or null if there are no camera bounds*/),
 		skiRuns) {
-
-	override val additionalCallback: OnMapReadyCallback = OnMapReadyCallback {
-		super.additionalCallback
-		// Override this callback to run any additional steps when the map is ready.
-		// Otherwise this can be excluded.
-	}
 
 	override fun getOtherIcon(name: String): Int? {
 		// Use this function to assign icons to "other" locations on the map (such as lodges, parking lots, etc.)

@@ -167,5 +167,6 @@ object Locations {
 	fun resetLocations() {
 		currentLocation = null
 		previousLocation = null
+		isOnChairlift = null
 	}
 }

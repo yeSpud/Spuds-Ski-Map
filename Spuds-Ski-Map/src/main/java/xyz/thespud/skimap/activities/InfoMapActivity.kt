@@ -42,17 +42,19 @@ abstract class InfoMapActivity(activity: FragmentActivity,
 	var loadedMapMarkers: Array<MapMarker> = emptyArray()
 
 	@SuppressLint("PotentialBehaviorOverride")
-	override val additionalCallback: OnMapReadyCallback = OnMapReadyCallback {
+	override val additionalCallback: OnMapReadyCallback = OnMapReadyCallback { // FIXME Not being called when overriden
+		Log.v("additionalCallback", "additionalCallback called for InfoMapActivity")
 
 		googleMap.setOnCircleClickListener {
-
+			Log.v("onCircleClicked", "Circle clicked!")
 			googleMap.setInfoWindowAdapter(this)
 
 			val mapMarker = it.tag as MapMarker
 			val location = LatLng(mapMarker.location.latitude, mapMarker.location.longitude)
 
-			if (runMarker == null) {
-				runMarker = googleMap.addMarker {
+			var marker = runMarker
+			if (marker == null) {
+				marker = googleMap.addMarker {
 					position(location)
 					icon(mapMarker.markerColor)
 					title(mapMarker.name)
@@ -60,15 +62,17 @@ abstract class InfoMapActivity(activity: FragmentActivity,
 					visible(true)
 				}
 			} else {
-				runMarker!!.position = location
-				runMarker!!.setIcon(mapMarker.markerColor)
-				runMarker!!.title = mapMarker.name
-				runMarker!!.isVisible = true
+				marker.position = location
+				marker.setIcon(mapMarker.markerColor)
+				marker.title = mapMarker.name
+				marker.isVisible = true
 			}
 
-			runMarker!!.isVisible = true
-			runMarker!!.tag = mapMarker
-			runMarker!!.showInfoWindow()
+			marker!!.isVisible = true
+			marker.tag = mapMarker
+			marker.showInfoWindow()
+
+			runMarker = marker
 		}
 
 		googleMap.setOnInfoWindowCloseListener { it.isVisible = false }
