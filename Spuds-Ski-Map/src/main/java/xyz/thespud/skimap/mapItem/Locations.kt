@@ -62,7 +62,6 @@ object Locations {
 		}
 
 		for (endingChairlift in map.endingChairliftTerminals) {
-			// if (endingChairlift.locationInsidePoints(currentLocation!!)) {
 			if (PolyUtil.containsLocation(location.latitude, location.longitude,
 					endingChairlift.points, true)) {
 				return endingChairlift.name
