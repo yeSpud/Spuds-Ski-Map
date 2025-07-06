@@ -41,8 +41,9 @@ abstract class InfoMapActivity(activity: FragmentActivity,
 
 	var loadedMapMarkers: Array<MapMarker> = emptyArray()
 
+	// FIXME Not being called when overridden
 	@SuppressLint("PotentialBehaviorOverride")
-	override val additionalCallback: OnMapReadyCallback = OnMapReadyCallback { // FIXME Not being called when overriden
+	override val additionalCallback: OnMapReadyCallback = OnMapReadyCallback {
 		Log.v("additionalCallback", "additionalCallback called for InfoMapActivity")
 
 		googleMap.setOnCircleClickListener {
@@ -99,7 +100,7 @@ abstract class InfoMapActivity(activity: FragmentActivity,
 					val polyline = withContext(Dispatchers.Main) {
 						googleMap.addPolyline {
 							addAll(polylinePoints)
-							color(previousMapMarker!!.color)
+							color(previousMapMarker.color)
 							zIndex(10.0F)
 							geodesic(true)
 							startCap(RoundCap())
@@ -185,7 +186,7 @@ abstract class InfoMapActivity(activity: FragmentActivity,
 		try {
 			altitude.text = activity.getString(R.string.marker_altitude,
 				(markerInfo.location.altitude * altitudeConversion).roundToInt())
-		} catch (e: IllegalArgumentException) {
+		} catch (_: IllegalArgumentException) {
 			altitude.text = activity.getString(R.string.marker_altitude, 0)
 		}
 
@@ -197,7 +198,7 @@ abstract class InfoMapActivity(activity: FragmentActivity,
 		try {
 			speed.text = activity.getString(R.string.marker_speed,
 				(markerInfo.location.speed / speedConversion).roundToInt())
-		} catch (e: IllegalArgumentException) {
+		} catch (_: IllegalArgumentException) {
 			speed.text = activity.getString(R.string.marker_speed, 0)
 		}
 

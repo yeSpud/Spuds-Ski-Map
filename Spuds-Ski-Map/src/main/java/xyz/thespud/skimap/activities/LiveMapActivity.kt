@@ -22,6 +22,7 @@ import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
 import com.google.android.gms.maps.model.Marker
+import com.google.maps.android.PolyUtil
 import com.google.maps.android.ktx.addMarker
 import xyz.thespud.skimap.R
 import xyz.thespud.skimap.mapItem.Locations
@@ -126,7 +127,8 @@ abstract class LiveMapActivity(activity: FragmentActivity,
 
 	override fun isInBounds(location: Location): Boolean {
 		if (skiAreaBounds != null) {
-			return skiAreaBounds!!.locationInsidePoints(location)
+			return PolyUtil.containsLocation(location.latitude, location.longitude,
+				skiAreaBounds!!.points, true)
 		}
 		return false
 	}
@@ -144,10 +146,6 @@ abstract class LiveMapActivity(activity: FragmentActivity,
 		}
 
 		return null
-	}
-
-	override fun getInLocation(location: Location): MapMarker? {
-		return Locations.checkIfOnOther(this)
 	}
 
 	override fun updateMapMarker(locationString: String) {
