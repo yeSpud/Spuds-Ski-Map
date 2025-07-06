@@ -16,10 +16,17 @@ class PolygonMapItem(
 		for (property in properties) {
 			Log.v("parseMetadata", "Parsing property $property")
 			when (property) {
-
+				LIFTLINE_RUN_KEY -> {
+					val allLifts = property.split(":")[1]
+					metadata[LIFTLINE_RUN_KEY] = allLifts.split(", ")
+				}
 			}
 		}
 		return metadata
+	}
+
+	companion object {
+		const val LIFTLINE_RUN_KEY = "liftline"
 	}
 
 }

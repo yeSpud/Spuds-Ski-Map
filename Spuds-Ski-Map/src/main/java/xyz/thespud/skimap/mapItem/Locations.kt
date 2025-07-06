@@ -78,30 +78,47 @@ object Locations {
 			return null
 		}
 
-		var name: String? = null
-
 		val startingTerminal = isInStartingTerminal(map)
 		if (startingTerminal != null) {
 			isOnChairlift = startingTerminal
-			name = startingTerminal
+			return MapMarker(startingTerminal, location, chairliftIcon,
+				BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED), Color.RED)
 		}
 
 		val endingTerminal = isInEndingTerminal(map)
 		if (endingTerminal != null) {
 			isOnChairlift = null
-			name = endingTerminal
+			return MapMarker(endingTerminal, location, chairliftIcon,
+				BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED), Color.RED)
 		}
 
 		if (isOnChairlift != null) {
-			name = isOnChairlift!!
+
+			val liftlineRun = checkIfOnRun(map)
+			if (liftlineRun != null) {
+
+				val allRuns = mutableListOf<PolygonMapItem>()
+				allRuns.addAll(map.greenRunBounds)
+				allRuns.addAll(map.blueRunBounds)
+				allRuns.addAll( map.blueRunBounds)
+				allRuns.addAll(map.doubleBlackRunBounds)
+
+				for (runs in allRuns) {
+					val liftlineRuns = runs.metadata[PolygonMapItem.LIFTLINE_RUN_KEY]
+					if (liftlineRuns != null) {
+						for (liftlineRun in liftlineRuns as List<*>) {
+							if (liftlineRun == isOnChairlift!!) {
+								return MapMarker(isOnChairlift!!, location, chairliftIcon,
+									BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED),
+									Color.RED)
+							}
+						}
+					}
+				}
+			}
 		}
 
-		if (name == null) {
-			return null
-		}
-
-		return MapMarker(name, location, chairliftIcon,
-			BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED), Color.RED)
+		return null
 	}
 
 	fun checkIfOnRun(map: MapHandler): MapMarker? {
