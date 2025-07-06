@@ -22,6 +22,7 @@ import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
 import com.google.android.gms.maps.model.Marker
+import com.google.maps.android.PolyUtil
 import com.google.maps.android.ktx.addMarker
 import xyz.thespud.skimap.R
 import xyz.thespud.skimap.mapItem.Locations
@@ -33,9 +34,9 @@ import xyz.thespud.skimap.services.SkiingNotification.NOTIFICATION_PERMISSION
 
 abstract class LiveMapActivity(activity: FragmentActivity,
                                leftPadding: Int, topPadding: Int, rightPadding: Int, bottomPadding: Int,
-                               cameraPosition: CameraPosition, cameraBounds: LatLngBounds?, skiRuns: SkiRuns):
-	MapHandler(activity, leftPadding, topPadding, rightPadding, bottomPadding, cameraPosition,
-		cameraBounds, skiRuns), ServiceCallbacks {
+                               cameraPosition: CameraPosition, cameraBounds: LatLngBounds?, skiRuns: SkiRuns,
+                               showDebug: Boolean = false): MapHandler(activity, leftPadding, topPadding, rightPadding, bottomPadding,
+	cameraPosition, cameraBounds, skiRuns, false, showDebug), ServiceCallbacks {
 
 	private var locationMarker: Marker? = null
 
@@ -126,7 +127,8 @@ abstract class LiveMapActivity(activity: FragmentActivity,
 
 	override fun isInBounds(location: Location): Boolean {
 		if (skiAreaBounds != null) {
-			return skiAreaBounds!!.locationInsidePoints(location)
+			return PolyUtil.containsLocation(location.latitude, location.longitude,
+				skiAreaBounds!!.points, true)
 		}
 		return false
 	}
@@ -144,10 +146,6 @@ abstract class LiveMapActivity(activity: FragmentActivity,
 		}
 
 		return null
-	}
-
-	override fun getInLocation(location: Location): MapMarker? {
-		return Locations.checkIfOnOther(this)
 	}
 
 	override fun updateMapMarker(locationString: String) {
