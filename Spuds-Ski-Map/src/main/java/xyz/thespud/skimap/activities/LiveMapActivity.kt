@@ -34,9 +34,9 @@ import xyz.thespud.skimap.services.SkiingNotification.NOTIFICATION_PERMISSION
 
 abstract class LiveMapActivity(activity: FragmentActivity,
                                leftPadding: Int, topPadding: Int, rightPadding: Int, bottomPadding: Int,
-                               cameraPosition: CameraPosition, cameraBounds: LatLngBounds?, skiRuns: SkiRuns):
-	MapHandler(activity, leftPadding, topPadding, rightPadding, bottomPadding, cameraPosition,
-		cameraBounds, skiRuns), ServiceCallbacks {
+                               cameraPosition: CameraPosition, cameraBounds: LatLngBounds?, skiRuns: SkiRuns,
+                               showDebug: Boolean = false): MapHandler(activity, leftPadding, topPadding, rightPadding, bottomPadding,
+	cameraPosition, cameraBounds, skiRuns, false, showDebug), ServiceCallbacks {
 
 	private var locationMarker: Marker? = null
 

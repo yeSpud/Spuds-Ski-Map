@@ -39,7 +39,7 @@ abstract class MapHandler(val activity: FragmentActivity,
                           private val rightPadding: Int, private val bottomPadding: Int,
                           private val cameraPosition: CameraPosition,
                           private val cameraBounds: LatLngBounds?, private val skiRuns: SkiRuns,
-                          private val drawOpaqueRuns: Boolean = false, private val showDebug: Boolean = false): OnMapReadyCallback {
+                          private val drawOpaqueRuns: Boolean, private val showDebug: Boolean): OnMapReadyCallback {
 
 	internal lateinit var googleMap: GoogleMap
 

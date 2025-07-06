@@ -27,9 +27,9 @@ import kotlin.math.roundToInt
 
 abstract class InfoMapActivity(activity: FragmentActivity,
                                leftPadding: Int, topPadding: Int, rightPadding: Int, bottomPadding: Int,
-                               cameraPosition: CameraPosition, cameraBounds: LatLngBounds?, skiRuns: SkiRuns):
-	MapHandler(activity, leftPadding, topPadding, rightPadding, bottomPadding, cameraPosition,
-		cameraBounds, skiRuns), GoogleMap.InfoWindowAdapter {
+                               cameraPosition: CameraPosition, cameraBounds: LatLngBounds?, skiRuns: SkiRuns,
+                               showDebug: Boolean = false): MapHandler(activity, leftPadding, topPadding, rightPadding, bottomPadding,
+	cameraPosition, cameraBounds, skiRuns, true, showDebug), GoogleMap.InfoWindowAdapter {
 
 	var circles: MutableList<Circle> = mutableListOf()
 
