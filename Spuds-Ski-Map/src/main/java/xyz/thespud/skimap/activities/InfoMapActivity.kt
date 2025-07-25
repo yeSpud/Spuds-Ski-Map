@@ -25,11 +25,9 @@ import xyz.thespud.skimap.mapItem.MapMarker
 import xyz.thespud.skimap.mapItem.SkiRuns
 import kotlin.math.roundToInt
 
-abstract class InfoMapActivity(activity: FragmentActivity,
-                               leftPadding: Int, topPadding: Int, rightPadding: Int, bottomPadding: Int,
-                               cameraPosition: CameraPosition, cameraBounds: LatLngBounds?, skiRuns: SkiRuns,
-                               showDebug: Boolean = false): MapHandler(activity, leftPadding, topPadding, rightPadding, bottomPadding,
-	cameraPosition, cameraBounds, skiRuns, true, showDebug), GoogleMap.InfoWindowAdapter {
+abstract class InfoMapActivity(cameraPosition: CameraPosition, cameraBounds: LatLngBounds?, skiRuns: SkiRuns,
+                               showDebug: Boolean = false): MapHandler(cameraPosition, cameraBounds, skiRuns,
+	true, showDebug), GoogleMap.InfoWindowAdapter {
 
 	var circles: MutableList<Circle> = mutableListOf()
 
@@ -172,7 +170,7 @@ abstract class InfoMapActivity(activity: FragmentActivity,
 			return null
 		}
 
-		val markerView: View = activity.layoutInflater.inflate(R.layout.info_window, null)
+		val markerView: View = layoutInflater.inflate(R.layout.info_window, null)
 		val name: TextView = markerView.findViewById(R.id.marker_name)
 
 		val markerInfo: MapMarker = marker.tag as MapMarker
@@ -184,10 +182,9 @@ abstract class InfoMapActivity(activity: FragmentActivity,
 		val altitudeConversion = 3.280839895f
 
 		try {
-			altitude.text = activity.getString(R.string.marker_altitude,
-				(markerInfo.location.altitude * altitudeConversion).roundToInt())
+			altitude.text = getString(R.string.marker_altitude, (markerInfo.location.altitude * altitudeConversion).roundToInt())
 		} catch (_: IllegalArgumentException) {
-			altitude.text = activity.getString(R.string.marker_altitude, 0)
+			altitude.text = getString(R.string.marker_altitude, 0)
 		}
 
 		val speed: TextView = markerView.findViewById(R.id.marker_speed)
@@ -196,10 +193,9 @@ abstract class InfoMapActivity(activity: FragmentActivity,
 		val speedConversion = 0.44704f
 
 		try {
-			speed.text = activity.getString(R.string.marker_speed,
-				(markerInfo.location.speed / speedConversion).roundToInt())
+			speed.text = getString(R.string.marker_speed, (markerInfo.location.speed / speedConversion).roundToInt())
 		} catch (_: IllegalArgumentException) {
-			speed.text = activity.getString(R.string.marker_speed, 0)
+			speed.text = getString(R.string.marker_speed, 0)
 		}
 
 		return markerView

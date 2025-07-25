@@ -8,7 +8,7 @@ import kotlinx.coroutines.launch
 import xyz.thespud.skimap.R
 
 open class InfoMapOptionsDialog(private val infoMapActivity: InfoMapActivity): MapOptionsDialog(
-	infoMapActivity.activity.layoutInflater, R.layout.info_map_options_v2, infoMapActivity) {
+	infoMapActivity.layoutInflater, R.layout.info_map_options_v2, infoMapActivity) {
 
 	private var showDotsImage: MapOptionItem? = null
 
@@ -29,7 +29,7 @@ open class InfoMapOptionsDialog(private val infoMapActivity: InfoMapActivity): M
 			infoMapActivity.showDots = !infoMapActivity.showDots
 
 			if (infoMapActivity.showDots) {
-				infoMapActivity.activity.lifecycleScope.launch { infoMapActivity.addCirclesToMap() }
+				infoMapActivity.lifecycleScope.launch { infoMapActivity.addCirclesToMap() }
 			} else {
 				infoMapActivity.removeCircles()
 			}

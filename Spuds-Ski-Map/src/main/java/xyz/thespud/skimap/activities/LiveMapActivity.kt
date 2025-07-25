@@ -1,6 +1,7 @@
 package xyz.thespud.skimap.activities
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.ActivityManager
 import android.app.AlertDialog
 import android.content.ComponentName
@@ -8,16 +9,20 @@ import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
 import android.content.pm.PackageManager
+import android.graphics.Color
 import android.location.Location
 import android.location.LocationManager
 import android.os.Build
 import android.os.IBinder
 import android.os.Process
 import android.util.Log
+import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
+import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
@@ -26,25 +31,18 @@ import com.google.maps.android.PolyUtil
 import com.google.maps.android.ktx.addMarker
 import xyz.thespud.skimap.R
 import xyz.thespud.skimap.mapItem.Locations
+import xyz.thespud.skimap.mapItem.Locations.chairliftIcon
 import xyz.thespud.skimap.mapItem.MapMarker
+import xyz.thespud.skimap.mapItem.PolygonMapItem
 import xyz.thespud.skimap.mapItem.SkiRuns
-import xyz.thespud.skimap.services.ServiceCallbacks
 import xyz.thespud.skimap.services.SkierLocationService
 import xyz.thespud.skimap.services.SkiingNotification.NOTIFICATION_PERMISSION
 
-abstract class LiveMapActivity(activity: FragmentActivity,
-                               leftPadding: Int, topPadding: Int, rightPadding: Int, bottomPadding: Int,
-                               cameraPosition: CameraPosition, cameraBounds: LatLngBounds?, skiRuns: SkiRuns,
-                               showDebug: Boolean = false): MapHandler(activity, leftPadding, topPadding, rightPadding, bottomPadding,
-	cameraPosition, cameraBounds, skiRuns, false, showDebug), ServiceCallbacks {
-
-	private var locationMarker: Marker? = null
+abstract class LiveMapActivity(cameraPosition: CameraPosition, cameraBounds: LatLngBounds?, skiRuns: SkiRuns,
+                               showDebug: Boolean = false): MapHandler(cameraPosition, cameraBounds,
+	skiRuns, false, showDebug), GoogleMap.OnMyLocationClickListener {
 
 	var isMapSetup = false
-
-	var skierLocationService: SkierLocationService? = null
-	private set
-	private var bound = false
 
 	var manuallyDisabled = false
 	private set
@@ -54,28 +52,11 @@ abstract class LiveMapActivity(activity: FragmentActivity,
 	private val serviceConnection = object : ServiceConnection {
 
 		override fun onServiceConnected(name: ComponentName?, service: IBinder) {
-			val binder = service as SkierLocationService.LocalBinder
-			skierLocationService = binder.getService()
-			bound = true
-			Log.v("serviceConnection", "Skier location service bound")
-			skierLocationService!!.setCallbacks(this@LiveMapActivity)
 			setIsTracking(true)
 		}
 
 		override fun onServiceDisconnected(name: ComponentName?) {
-
-			if (locationMarker != null) {
-				Log.v("serviceConnection", "Removing location marker")
-				locationMarker!!.remove()
-				locationMarker = null
-			}
-
-			skierLocationService?.setCallbacks(null)
-			activity.unbindService(this)
-			Log.v("serviceConnection", "Skier location service unbound")
-			skierLocationService = null
 			setIsTracking(false)
-			bound = false
 		}
 	}
 
@@ -83,7 +64,7 @@ abstract class LiveMapActivity(activity: FragmentActivity,
 		Log.v("additionalCallback", "additionalCallback called for LiveMapActivity")
 
 		// Determine if the user has enabled location permissions.
-		val locationEnabled = activity.checkPermission(Manifest.permission.ACCESS_FINE_LOCATION, Process.myPid(),
+		val locationEnabled = checkPermission(Manifest.permission.ACCESS_FINE_LOCATION, Process.myPid(),
 			Process.myUid()) == PackageManager.PERMISSION_GRANTED
 
 		// Request location permission, so that we can get the location of the device.
@@ -96,11 +77,11 @@ abstract class LiveMapActivity(activity: FragmentActivity,
 		} else {
 
 			// Setup the location popup dialog.
-			val alertDialogBuilder: AlertDialog.Builder = AlertDialog.Builder(activity)
+			val alertDialogBuilder: AlertDialog.Builder = AlertDialog.Builder(this)
 			alertDialogBuilder.setTitle(R.string.alert_title)
 			alertDialogBuilder.setMessage(R.string.alert_message)
 			alertDialogBuilder.setPositiveButton(R.string.alert_ok) { _, _ ->
-				ActivityCompat.requestPermissions(activity, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+				ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
 					permissionValue)
 			}
 
@@ -108,64 +89,40 @@ abstract class LiveMapActivity(activity: FragmentActivity,
 			alertDialogBuilder.create().show()
 		}
 
-		googleMap.setPadding(leftPadding, topPadding, rightPadding, bottomPadding)
+		// googleMap.setPadding(leftPadding, topPadding, rightPadding, bottomPadding)
 		isMapSetup = true
 	}
 
-	override fun destroy() {
+	override fun onMyLocationClick(location: Location) {
+		Locations.updateLocations(location)
 
-		if (bound) {
-			skierLocationService?.setCallbacks(null)
-			activity.unbindService(serviceConnection)
-			skierLocationService = null
-			isTrackingLocation = false
-			bound = false
-		}
-
-		super.destroy()
-	}
-
-	override fun isInBounds(location: Location): Boolean {
-		if (skiAreaBounds != null) {
-			return PolyUtil.containsLocation(location.latitude, location.longitude,
-				skiAreaBounds!!.points, true)
-		}
-		return false
-	}
-
-	override fun getOnLocation(location: Location): MapMarker? {
-
-		var mapMarker = Locations.checkIfIOnChairlift(this)
+		var toast = Toast.makeText(this, R.string.your_location, Toast.LENGTH_LONG)
+		var mapMarker = Locations.checkIfIOnChairlift()
 		if (mapMarker != null) {
-			return mapMarker
+			toast = Toast.makeText(this, getString(R.string.current_chairlift, mapMarker.name),
+				Toast.LENGTH_LONG)
 		}
 
-		mapMarker = Locations.checkIfOnRun(this)
+		mapMarker = Locations.checkIfOnRun()
 		if (mapMarker != null) {
-			return mapMarker
+			toast = Toast.makeText(this, getString(R.string.current_run, mapMarker.name),
+				Toast.LENGTH_LONG)
 		}
 
-		return null
-	}
-
-	override fun updateMapMarker(locationString: String) {
-		val location = Locations.currentLocation
-		if (location != null) {
-			if (locationMarker == null) {
-				locationMarker = googleMap.addMarker {
-					position(LatLng(location.latitude, location.longitude))
-					title(activity.resources.getString(R.string.your_location))
-				}
-			} else {
-
-				// Otherwise just update the LatLng location.
-				locationMarker!!.position = LatLng(location.latitude, location.longitude)
-			}
+		mapMarker = Locations.getInLocation()
+		if (mapMarker != null) {
+			toast = Toast.makeText(this, getString(R.string.current_other, mapMarker.name),
+				Toast.LENGTH_LONG)
 		}
+
+		toast.show()
 	}
 
-	override fun setIsTracking(isTracking: Boolean) {
+	// This will only get called when we have location permissions.
+	@SuppressLint("MissingPermission")
+	fun setIsTracking(isTracking: Boolean) {
 		Log.d("setIsTracking", "Setting location tracking to $isTracking")
+		googleMap.isMyLocationEnabled = isTracking
 		isTrackingLocation = isTracking
 
 		val button = locationTrackingButton ?: return
@@ -174,34 +131,30 @@ abstract class LiveMapActivity(activity: FragmentActivity,
 		}
 	}
 
-	override fun setManuallyDisabled(manuallyDisabled: Boolean) {
+	fun setManuallyDisabled(manuallyDisabled: Boolean) {
 		Log.d("setManuallyDisabled", "Setting manually disabled to $manuallyDisabled")
 		this.manuallyDisabled = manuallyDisabled
 	}
 
-	override fun getLaunchingActivity(): FragmentActivity {
-		return activity
-	}
-
 	fun launchLocationService() {
 
-		if (ContextCompat.checkSelfPermission(activity, Manifest.permission.POST_NOTIFICATIONS)
+		if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
 			== PackageManager.PERMISSION_DENIED) {
 			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-				ActivityCompat.requestPermissions(activity, arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+				ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.POST_NOTIFICATIONS),
 					NOTIFICATION_PERMISSION
 				)
 			}
 		}
 
-		val locationManager: LocationManager = activity.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+		val locationManager: LocationManager = getSystemService(LOCATION_SERVICE) as LocationManager
 		if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
 
-			val serviceIntent = Intent(activity, SkierLocationService::class.java)
+			val serviceIntent = Intent(this, SkierLocationService::class.java)
 			serviceIntent.action = SkierLocationService.START_TRACKING_INTENT
 
 			// Check if the service has already been started and is running...
-			val activityManager: ActivityManager = activity.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+			val activityManager: ActivityManager = getSystemService(ACTIVITY_SERVICE) as ActivityManager
 
 			// As of Build.VERSION_CODES.O, this method is no longer available to third party applications.
 			// For backwards compatibility, it will still return the caller's own service.
@@ -215,8 +168,8 @@ abstract class LiveMapActivity(activity: FragmentActivity,
 				}
 			}
 
-			activity.bindService(serviceIntent, serviceConnection, Context.BIND_NOT_FOREGROUND)
-			activity.startService(serviceIntent)
+			bindService(serviceIntent, serviceConnection, BIND_NOT_FOREGROUND)
+			startService(serviceIntent)
 		} else {
 			Log.w("launchLocationService", "GPS not enabled")
 		}

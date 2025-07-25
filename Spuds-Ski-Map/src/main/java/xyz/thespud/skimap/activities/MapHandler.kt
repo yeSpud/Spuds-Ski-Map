@@ -5,6 +5,8 @@ import androidx.annotation.AnyThread
 import androidx.annotation.ColorRes
 import androidx.annotation.DrawableRes
 import androidx.annotation.RawRes
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -32,14 +34,10 @@ import xyz.thespud.skimap.mapItem.Locations
 import xyz.thespud.skimap.mapItem.PolygonMapItem
 import xyz.thespud.skimap.mapItem.PolylineMapItem
 import xyz.thespud.skimap.mapItem.SkiRuns
-import java.util.Collections.emptyList
 
-abstract class MapHandler(val activity: FragmentActivity,
-                          private val leftPadding: Int, private val topPadding: Int,
-                          private val rightPadding: Int, private val bottomPadding: Int,
-                          private val cameraPosition: CameraPosition,
-                          private val cameraBounds: LatLngBounds?, private val skiRuns: SkiRuns,
-                          private val drawOpaqueRuns: Boolean, private val showDebug: Boolean): OnMapReadyCallback {
+abstract class MapHandler(private val cameraPosition: CameraPosition, private val cameraBounds: LatLngBounds?,
+                          private val skiRuns: SkiRuns, private val drawOpaqueRuns: Boolean,
+                          private val showDebug: Boolean): FragmentActivity(), OnMapReadyCallback {
 
 	internal lateinit var googleMap: GoogleMap
 
@@ -47,6 +45,7 @@ abstract class MapHandler(val activity: FragmentActivity,
 
 	abstract val additionalCallback: OnMapReadyCallback
 
+	/*
 	var chairliftPolylines: List<PolylineMapItem> = emptyList()
 		private set
 	var greenRunPolylines: List<PolylineMapItem> = emptyList()
@@ -76,26 +75,27 @@ abstract class MapHandler(val activity: FragmentActivity,
 		private set
 	var doubleBlackRunBounds: List<PolygonMapItem> = emptyList()
 		private set
+	 */
 
 	open fun destroy() {
 
-		for (chairliftPolyline in chairliftPolylines) {
+		for (chairliftPolyline in Locations.chairliftPolylines) {
 			chairliftPolyline.clearPolylines()
 		}
 
-		for (greenRunPolyline in greenRunPolylines) {
+		for (greenRunPolyline in Locations.greenRunPolylines) {
 			greenRunPolyline.clearPolylines()
 		}
 
-		for (blueRunPolyline in blueRunPolylines) {
+		for (blueRunPolyline in Locations.blueRunPolylines) {
 			blueRunPolyline.clearPolylines()
 		}
 
-		for (blackRunPolyline in blackRunPolylines) {
+		for (blackRunPolyline in Locations.blackRunPolylines) {
 			blackRunPolyline.clearPolylines()
 		}
 
-		for (doubleBlackRunPolyline in doubleBlackRunPolylines) {
+		for (doubleBlackRunPolyline in Locations.doubleBlackRunPolylines) {
 			doubleBlackRunPolyline.clearPolylines()
 		}
 
@@ -106,8 +106,6 @@ abstract class MapHandler(val activity: FragmentActivity,
 		// This frees up a bunch of ram, so call the garbage collection to collect the free ram
 		System.gc()
 	}
-
-	abstract fun getOtherIcon(name: String): Int
 
 	/**
 	 * Manipulates the map once available.
@@ -146,17 +144,28 @@ abstract class MapHandler(val activity: FragmentActivity,
 		googleMap.isIndoorEnabled = false
 		googleMap.mapType = GoogleMap.MAP_TYPE_SATELLITE
 
-		// Load the various polylines onto the map.
-		activity.lifecycleScope.launch(Dispatchers.Default) { drawPolylines() }
+		// Load the various polylines and polygons onto the map.
+		lifecycleScope.launch(Dispatchers.Default) { loadSkiRuns() }
 
-		googleMap.setPadding(leftPadding, topPadding, rightPadding, bottomPadding)
+		// Fix edge to edge behavior
+		ViewCompat.setOnApplyWindowInsetsListener(window.decorView.rootView) { v, insets ->
+			val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+			val lpad = systemBars.left
+			val tpad = systemBars.top
+			val rpad = systemBars.right
+			val bpad = systemBars.bottom
+
+			googleMap.setPadding(lpad, tpad, rpad, bpad)
+
+			insets
+		}
 
 		Log.d("onMapReady", "Running additional setup steps...")
 		additionalCallback.onMapReady(googleMap)
 		Log.d("onMapReady", "Finished setting up map.")
 	}
 
-	private suspend fun drawPolylines() = coroutineScope {
+	private suspend fun loadSkiRuns() = coroutineScope {
 		val tag = "drawPolylines"
 		val jobs = mutableListOf<Job>()
 		Log.v(tag, "Started drawing polylines and polygons")
@@ -170,7 +179,7 @@ abstract class MapHandler(val activity: FragmentActivity,
 				} else {
 					R.color.chairlift
 				}
-				chairliftPolylines = loadPolylines(liftsPolyline, chairliftColor, 4f, Locations.chairliftIcon)
+				Locations.chairliftPolylines = loadPolylines(liftsPolyline, chairliftColor, 4f, Locations.chairliftIcon)
 				Log.d(tag, "Finished loading chairlift polyline")
 			})
 		}
@@ -184,7 +193,7 @@ abstract class MapHandler(val activity: FragmentActivity,
 				} else {
 					R.color.green
 				}
-				greenRunPolylines = loadPolylines(greenPolylines, greenColor, 3f, Locations.greenIcon)
+				Locations.greenRunPolylines = loadPolylines(greenPolylines, greenColor, 3f, Locations.greenIcon)
 				Log.d(tag, "Finished loading green run polylines")
 			})
 		}
@@ -198,7 +207,7 @@ abstract class MapHandler(val activity: FragmentActivity,
 				} else {
 					R.color.blue
 				}
-				blueRunPolylines = loadPolylines(bluePolylines, blueColor, 2f, Locations.blueIcon)
+				Locations.blueRunPolylines = loadPolylines(bluePolylines, blueColor, 2f, Locations.blueIcon)
 				Log.d(tag, "Finished loading blue run polylines")
 			})
 		}
@@ -212,7 +221,7 @@ abstract class MapHandler(val activity: FragmentActivity,
 				} else {
 					R.color.black
 				}
-				blackRunPolylines = loadPolylines(blackPolylines, blackColor, 1f, Locations.blackIcon)
+				Locations.blackRunPolylines = loadPolylines(blackPolylines, blackColor, 1f, Locations.blackIcon)
 				Log.d(tag, "Finished loading black run polylines")
 			})
 		}
@@ -226,7 +235,7 @@ abstract class MapHandler(val activity: FragmentActivity,
 				} else {
 					R.color.black
 				}
-				doubleBlackRunPolylines = loadPolylines(doubleBlackPolylines, blackColor, 1f,
+				Locations.doubleBlackRunPolylines = loadPolylines(doubleBlackPolylines, blackColor, 1f,
 					Locations.doubleBlackIcon)
 				Log.d(tag, "Finished loading double black run polylines")
 			})
@@ -236,7 +245,7 @@ abstract class MapHandler(val activity: FragmentActivity,
 		if (startingLiftBounds != null) {
 			jobs.add(launch {
 				Log.d(tag, "Adding starting chairlift terminals")
-				startingChairliftTerminals = loadPolygons(startingLiftBounds, R.color.chairlift_polygon,
+				Locations.startingChairliftTerminals = loadPolygons(startingLiftBounds, R.color.chairlift_polygon,
 					Locations.chairliftIcon)
 				Log.d(tag, "Finished adding ending chairlift terminals")
 			})
@@ -246,7 +255,7 @@ abstract class MapHandler(val activity: FragmentActivity,
 		if (endingLiftPolylines != null) {
 			jobs.add(launch {
 				Log.d(tag, "Adding ending chairlift terminals")
-				endingChairliftTerminals = loadPolygons(endingLiftPolylines, R.color.chairlift_polygon,
+				Locations.endingChairliftTerminals = loadPolygons(endingLiftPolylines, R.color.chairlift_polygon,
 					Locations.chairliftIcon)
 				Log.d(tag, "Finished adding ending chairlift terminals")
 			})
@@ -256,7 +265,7 @@ abstract class MapHandler(val activity: FragmentActivity,
 		if (greenBounds != null) {
 			jobs.add(launch {
 				Log.d(tag, "Adding green bounds")
-				greenRunBounds = loadPolygons(greenBounds, R.color.green_polygon, Locations.greenIcon)
+				Locations.greenRunBounds = loadPolygons(greenBounds, R.color.green_polygon, Locations.greenIcon)
 				Log.d(tag, "Finished adding green bounds")
 			})
 		}
@@ -265,7 +274,7 @@ abstract class MapHandler(val activity: FragmentActivity,
 		if (blueBounds != null) {
 			jobs.add(launch {
 				Log.d(tag, "Adding blue bounds")
-				blueRunBounds = loadPolygons(blueBounds, R.color.blue_polygon, Locations.blueIcon)
+				Locations.blueRunBounds = loadPolygons(blueBounds, R.color.blue_polygon, Locations.blueIcon)
 				Log.d(tag, "Finished adding blue bounds")
 			})
 		}
@@ -274,7 +283,7 @@ abstract class MapHandler(val activity: FragmentActivity,
 		if (blackBounds != null) {
 			jobs.add(launch {
 				Log.d(tag, "Adding black bounds")
-				blackRunBounds = loadPolygons(blackBounds, R.color.black_polygon, Locations.blackIcon)
+				Locations.blackRunBounds = loadPolygons(blackBounds, R.color.black_polygon, Locations.blackIcon)
 				Log.d(tag, "Finished adding black bounds")
 			})
 		}
@@ -283,7 +292,7 @@ abstract class MapHandler(val activity: FragmentActivity,
 		if (doubleBlackBounds != null) {
 			jobs.add(launch {
 				Log.d(tag, "Adding double black bounds")
-				blackRunBounds = loadPolygons(doubleBlackBounds, R.color.black_polygon, Locations.doubleBlackIcon)
+				Locations.doubleBlackRunBounds = loadPolygons(doubleBlackBounds, R.color.black_polygon, Locations.doubleBlackIcon)
 				Log.d(tag, "Finished adding double black bounds")
 			})
 		}
@@ -298,13 +307,13 @@ abstract class MapHandler(val activity: FragmentActivity,
 			val otherPolygons = loadPolygons(skiRuns.other, R.color.other_polygon_fill, iconRes)
 			for (polygon in otherPolygons) {
 				if (polygon.name == "Ski Area Bounds") {
-					skiAreaBounds = polygon
+					Locations.skiAreaBounds = polygon
 					continue
 				}
 				sanitizedOtherBounds.add(polygon)
 			}
 
-			otherBounds = sanitizedOtherBounds
+			Locations.otherBounds = sanitizedOtherBounds
 			Log.d(tag, "Finished adding other bounds")
 		})
 
@@ -314,7 +323,7 @@ abstract class MapHandler(val activity: FragmentActivity,
 	}
 
 	private fun parseKmlFile(@RawRes file: Int): Iterable<KmlPlacemark> {
-		val kml = kmlLayer(googleMap, file, activity)
+		val kml = kmlLayer(googleMap, file, this)
 		if (kml.placemarks.spliterator().estimateSize() == 0L) {
 			Log.w("parseKmlFile", "No placemarks in kml file!")
 		}
@@ -336,7 +345,7 @@ abstract class MapHandler(val activity: FragmentActivity,
 				val coordinates: ArrayList<LatLng> = lineString.geometryObject
 
 				// Get the color of the polyline.
-				val argb = activity.getColor(color)
+				val argb = getColor(color)
 
 				val polylineMapItem = PolylineMapItem(placemark, icon)
 
@@ -380,7 +389,7 @@ abstract class MapHandler(val activity: FragmentActivity,
 
 				val kmlPolygon: KmlPolygon = placemark.geometry as KmlPolygon
 
-				val argb = activity.getColor(color)
+				val argb = getColor(color)
 
 				/*val polygon = */withContext(Dispatchers.Main) {
 					googleMap.addPolygon {

@@ -56,15 +56,15 @@ object SkiingNotification {
 		notificationManager.cancel(TRACKING_SERVICE_ID)
 	}
 
-	fun displaySkiingActivity(context: Context, serviceCallbacks: ServiceCallbacks, @DrawableRes appIcon: Int,
-	                          @StringRes textResource: Int, mapMarker: MapMarker) {
+	fun displaySkiingActivity(context: Context, intentToLaunch: Intent?,
+	                          @DrawableRes appIcon: Int, @StringRes textResource: Int, mapMarker: MapMarker) {
 		val text: String = context.getString(textResource, mapMarker.name)
-		serviceCallbacks.updateMapMarker(text)
-		updateTrackingNotification(context, serviceCallbacks, appIcon, text, mapMarker.icon)
+		// serviceCallbacks.updateMapMarker(text)
+		updateTrackingNotification(context, intentToLaunch, appIcon, text, mapMarker.icon)
 	}
 
-	fun updateTrackingNotification(context: Context, serviceCallbacks: ServiceCallbacks, @DrawableRes appIcon: Int,
-	                               title: String, @DrawableRes icon: Int?) {
+	fun updateTrackingNotification(context: Context, intentToLaunch: Intent?,
+	                               @DrawableRes appIcon: Int, title: String, @DrawableRes icon: Int?) {
 		Log.v("updateTrackingNotification", "updateTrackingNotification called!")
 		val bitmap: Bitmap? = if (icon != null) {
 			drawableToBitmap(AppCompatResources.getDrawable(context, icon)!!)
@@ -72,8 +72,8 @@ object SkiingNotification {
 			null
 		}
 
-		val activity = serviceCallbacks.getLaunchingActivity()
-		val notification: Notification = createTrackingNotification(context, activity, appIcon, title, bitmap)
+		val notification: Notification = createTrackingNotification(context, intentToLaunch, appIcon,
+			title, bitmap)
 
 		val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
@@ -117,12 +117,11 @@ object SkiingNotification {
 		return builder.build()
 	}
 
-	fun createTrackingNotification(context: Context, activityToLaunch: FragmentActivity?, @DrawableRes appIcon: Int,
+	fun createTrackingNotification(context: Context, intentToLaunch: Intent?, @DrawableRes appIcon: Int,
 	                               title: String, iconBitmap: Bitmap?): Notification {
 		var pendingIntent: PendingIntent? = null
-		if (activityToLaunch != null) {
-			val notificationIntent = Intent(context, activityToLaunch::class.java)
-			pendingIntent = PendingIntent.getActivity(context, 0, notificationIntent,
+		if (intentToLaunch != null) {
+			pendingIntent = PendingIntent.getActivity(context, 0, intentToLaunch,
 				PendingIntent.FLAG_IMMUTABLE)
 		}
 

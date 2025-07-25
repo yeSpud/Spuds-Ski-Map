@@ -17,6 +17,24 @@ object Locations {
 	var currentLocation: Location? = null
 		private set
 
+
+	var chairliftPolylines: List<PolylineMapItem> = emptyList()
+	var greenRunPolylines: List<PolylineMapItem> = emptyList()
+	var blueRunPolylines: List<PolylineMapItem> = emptyList()
+	var blackRunPolylines: List<PolylineMapItem> = emptyList()
+	var doubleBlackRunPolylines: List<PolylineMapItem> = emptyList()
+
+	var skiAreaBounds: PolygonMapItem? = null
+
+	var otherBounds: List<PolygonMapItem> = emptyList()
+	var startingChairliftTerminals: List<PolygonMapItem> = emptyList()
+	var endingChairliftTerminals: List<PolygonMapItem> = emptyList()
+
+	var greenRunBounds: List<PolygonMapItem> = emptyList()
+	var blueRunBounds: List<PolygonMapItem> = emptyList()
+	var blackRunBounds: List<PolygonMapItem> = emptyList()
+	var doubleBlackRunBounds: List<PolygonMapItem> = emptyList()
+
 	@DrawableRes
 	var chairliftIcon: Int = R.drawable.ic_chairlift
 	@DrawableRes
@@ -37,14 +55,14 @@ object Locations {
 		currentLocation = newLocation
 	}
 
-	private fun isInStartingTerminal(map: MapHandler): String? {
+	private fun isInStartingTerminal(): String? {
 		val location = currentLocation
 		if (location == null) {
-			Log.w("isInStartingTerminal", "Other map items have not been set up")
+			Log.w("isInStartingTerminal", "Location has not been set")
 			return null
 		}
 
-		for (startingChairlift in map.startingChairliftTerminals) {
+		for (startingChairlift in startingChairliftTerminals) {
 			if (PolyUtil.containsLocation(location.latitude, location.longitude,
 					startingChairlift.points, true)) {
 				return startingChairlift.name
@@ -54,14 +72,14 @@ object Locations {
 		return null
 	}
 
-	private fun isInEndingTerminal(map: MapHandler): String? {
+	private fun isInEndingTerminal(): String? {
 		val location = currentLocation
 		if (location == null) {
-			Log.w("isInEndingTerminal", "Other map items have not been set up")
+			Log.w("isInEndingTerminal", "Location has not been set")
 			return null
 		}
 
-		for (endingChairlift in map.endingChairliftTerminals) {
+		for (endingChairlift in endingChairliftTerminals) {
 			if (PolyUtil.containsLocation(location.latitude, location.longitude,
 					endingChairlift.points, true)) {
 				return endingChairlift.name
@@ -71,21 +89,21 @@ object Locations {
 		return null
 	}
 
-	fun checkIfIOnChairlift(map: MapHandler): MapMarker? {
+	fun checkIfIOnChairlift(): MapMarker? {
 		val location = currentLocation
 		if (location == null) {
-			Log.w("checkIfIOnChairlift", "Chairlifts have not been set up")
+			Log.w("checkIfIOnChairlift", "Location has not been set")
 			return null
 		}
 
-		val startingTerminal = isInStartingTerminal(map)
+		val startingTerminal = isInStartingTerminal()
 		if (startingTerminal != null) {
 			isOnChairlift = startingTerminal
 			return MapMarker(startingTerminal, location, chairliftIcon,
 				BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED), Color.RED)
 		}
 
-		val endingTerminal = isInEndingTerminal(map)
+		val endingTerminal = isInEndingTerminal()
 		if (endingTerminal != null) {
 			isOnChairlift = null
 			return MapMarker(endingTerminal, location, chairliftIcon,
@@ -94,14 +112,14 @@ object Locations {
 
 		if (isOnChairlift != null) {
 
-			val liftlineRun = checkIfOnRun(map)
+			val liftlineRun = checkIfOnRun()
 			if (liftlineRun != null) {
 
 				val allRuns = mutableListOf<PolygonMapItem>()
-				allRuns.addAll(map.greenRunBounds)
-				allRuns.addAll(map.blueRunBounds)
-				allRuns.addAll( map.blueRunBounds)
-				allRuns.addAll(map.doubleBlackRunBounds)
+				allRuns.addAll(greenRunBounds)
+				allRuns.addAll(blueRunBounds)
+				allRuns.addAll( blueRunBounds)
+				allRuns.addAll(doubleBlackRunBounds)
 
 				for (runs in allRuns) {
 					val liftlineRuns = runs.metadata[PolygonMapItem.LIFTLINE_RUN_KEY]
@@ -115,45 +133,79 @@ object Locations {
 						}
 					}
 				}
+				isOnChairlift = null
 			}
 		}
 
 		return null
 	}
 
-	fun checkIfOnRun(map: MapHandler): MapMarker? {
+	fun checkIfOnRun(): MapMarker? {
 		val location = currentLocation
 		if (location == null) {
-			Log.w("checkIfOnRun", "Ski runs have not been set up")
+			Log.w("checkIfOnRun", "Location has not been set")
 			return null
 		}
 
-		val greenRun = getRunMarker(location, map.greenRunBounds, greenIcon,
+		val greenRun = getRunMarker(location, greenRunBounds, greenIcon,
 			BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN),
 			Color.GREEN)
 		if (greenRun != null) {
 			return greenRun
 		}
 
-		val blueRun = getRunMarker(location, map.blueRunBounds, blueIcon,
+		val blueRun = getRunMarker(location, blueRunBounds, blueIcon,
 			BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE),
 			Color.BLUE)
 		if (blueRun != null) {
 			return blueRun
 		}
 
-		val blackRun = getRunMarker(location, map.blackRunBounds, blackIcon,
+		val blackRun = getRunMarker(location, blackRunBounds, blackIcon,
 			BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE),
 			Color.BLACK)
 		if (blackRun != null) {
 			return blackRun
 		}
 
-		val doubleBlackRun = getRunMarker(location, map.doubleBlackRunBounds, doubleBlackIcon,
+		val doubleBlackRun = getRunMarker(location, doubleBlackRunBounds, doubleBlackIcon,
 			BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE),
 			Color.BLACK)
 		if (doubleBlackRun != null) {
 			return doubleBlackRun
+		}
+
+		return null
+	}
+
+	fun getOnLocation(): MapMarker? {
+		var mapMarker = checkIfIOnChairlift()
+		if (mapMarker != null) {
+			return mapMarker
+		}
+
+		mapMarker = checkIfOnRun()
+		if (mapMarker != null) {
+			return mapMarker
+		}
+
+		return null
+	}
+
+	fun getInLocation(): MapMarker? {
+		val location = currentLocation
+		if (location == null) {
+			Log.w("getInLocation", "Location has not been set")
+			return null
+		}
+
+		for (other: PolygonMapItem in otherBounds) {
+			if (PolyUtil.containsLocation(location.latitude, location.longitude,
+					other.points, true)) {
+				return MapMarker(other.name, location, other.icon,
+					BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_MAGENTA),
+					Color.MAGENTA)
+			}
 		}
 
 		return null
