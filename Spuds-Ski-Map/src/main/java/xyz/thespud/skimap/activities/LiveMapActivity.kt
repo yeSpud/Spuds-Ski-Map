@@ -9,7 +9,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
 import android.content.pm.PackageManager
-import android.graphics.Color
 import android.location.Location
 import android.location.LocationManager
 import android.os.Build
@@ -22,25 +21,17 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
-import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
-import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
-import com.google.android.gms.maps.model.Marker
-import com.google.maps.android.PolyUtil
-import com.google.maps.android.ktx.addMarker
 import xyz.thespud.skimap.R
 import xyz.thespud.skimap.mapItem.Locations
-import xyz.thespud.skimap.mapItem.Locations.chairliftIcon
-import xyz.thespud.skimap.mapItem.MapMarker
-import xyz.thespud.skimap.mapItem.PolygonMapItem
 import xyz.thespud.skimap.mapItem.SkiRuns
 import xyz.thespud.skimap.services.SkierLocationService
 import xyz.thespud.skimap.services.SkiingNotification.NOTIFICATION_PERMISSION
 
-abstract class LiveMapActivity(cameraPosition: CameraPosition, cameraBounds: LatLngBounds?, skiRuns: SkiRuns,
-                               showDebug: Boolean = false): MapHandler(cameraPosition, cameraBounds,
-	skiRuns, false, showDebug), GoogleMap.OnMyLocationClickListener {
+abstract class LiveMapActivity(val activity: FragmentActivity, cameraPosition: CameraPosition, cameraBounds: LatLngBounds?,
+                               skiRuns: SkiRuns, showDebug: Boolean = false): MapHandler(activity,
+	cameraPosition, cameraBounds, skiRuns, false, showDebug), GoogleMap.OnMyLocationClickListener {
 
 	var isMapSetup = false
 
@@ -48,6 +39,7 @@ abstract class LiveMapActivity(cameraPosition: CameraPosition, cameraBounds: Lat
 	private set
 	var isTrackingLocation = false
 	private var locationTrackingButton: MapOptionItem? = null
+
 
 	private val serviceConnection = object : ServiceConnection {
 
@@ -64,7 +56,7 @@ abstract class LiveMapActivity(cameraPosition: CameraPosition, cameraBounds: Lat
 		Log.v("additionalCallback", "additionalCallback called for LiveMapActivity")
 
 		// Determine if the user has enabled location permissions.
-		val locationEnabled = checkPermission(Manifest.permission.ACCESS_FINE_LOCATION, Process.myPid(),
+		val locationEnabled = activity.checkPermission(Manifest.permission.ACCESS_FINE_LOCATION, Process.myPid(),
 			Process.myUid()) == PackageManager.PERMISSION_GRANTED
 
 		// Request location permission, so that we can get the location of the device.
@@ -77,11 +69,11 @@ abstract class LiveMapActivity(cameraPosition: CameraPosition, cameraBounds: Lat
 		} else {
 
 			// Setup the location popup dialog.
-			val alertDialogBuilder: AlertDialog.Builder = AlertDialog.Builder(this)
+			val alertDialogBuilder: AlertDialog.Builder = AlertDialog.Builder(activity)
 			alertDialogBuilder.setTitle(R.string.alert_title)
 			alertDialogBuilder.setMessage(R.string.alert_message)
 			alertDialogBuilder.setPositiveButton(R.string.alert_ok) { _, _ ->
-				ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+				ActivityCompat.requestPermissions(activity, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
 					permissionValue)
 			}
 
@@ -96,22 +88,22 @@ abstract class LiveMapActivity(cameraPosition: CameraPosition, cameraBounds: Lat
 	override fun onMyLocationClick(location: Location) {
 		Locations.updateLocations(location)
 
-		var toast = Toast.makeText(this, R.string.your_location, Toast.LENGTH_LONG)
+		var toast = Toast.makeText(activity, R.string.your_location, Toast.LENGTH_LONG)
 		var mapMarker = Locations.checkIfIOnChairlift()
 		if (mapMarker != null) {
-			toast = Toast.makeText(this, getString(R.string.current_chairlift, mapMarker.name),
+			toast = Toast.makeText(activity, activity.getString(R.string.current_chairlift, mapMarker.name),
 				Toast.LENGTH_LONG)
 		}
 
 		mapMarker = Locations.checkIfOnRun()
 		if (mapMarker != null) {
-			toast = Toast.makeText(this, getString(R.string.current_run, mapMarker.name),
+			toast = Toast.makeText(activity, activity.getString(R.string.current_run, mapMarker.name),
 				Toast.LENGTH_LONG)
 		}
 
 		mapMarker = Locations.getInLocation()
 		if (mapMarker != null) {
-			toast = Toast.makeText(this, getString(R.string.current_other, mapMarker.name),
+			toast = Toast.makeText(activity, activity.getString(R.string.current_other, mapMarker.name),
 				Toast.LENGTH_LONG)
 		}
 
@@ -138,23 +130,23 @@ abstract class LiveMapActivity(cameraPosition: CameraPosition, cameraBounds: Lat
 
 	fun launchLocationService() {
 
-		if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+		if (ContextCompat.checkSelfPermission(activity, Manifest.permission.POST_NOTIFICATIONS)
 			== PackageManager.PERMISSION_DENIED) {
 			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-				ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+				ActivityCompat.requestPermissions(activity, arrayOf(Manifest.permission.POST_NOTIFICATIONS),
 					NOTIFICATION_PERMISSION
 				)
 			}
 		}
 
-		val locationManager: LocationManager = getSystemService(LOCATION_SERVICE) as LocationManager
+		val locationManager: LocationManager = activity.getSystemService(Context.LOCATION_SERVICE) as LocationManager
 		if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
 
-			val serviceIntent = Intent(this, SkierLocationService::class.java)
+			val serviceIntent = Intent(activity, SkierLocationService::class.java)
 			serviceIntent.action = SkierLocationService.START_TRACKING_INTENT
 
 			// Check if the service has already been started and is running...
-			val activityManager: ActivityManager = getSystemService(ACTIVITY_SERVICE) as ActivityManager
+			val activityManager: ActivityManager = activity.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
 
 			// As of Build.VERSION_CODES.O, this method is no longer available to third party applications.
 			// For backwards compatibility, it will still return the caller's own service.
@@ -168,8 +160,8 @@ abstract class LiveMapActivity(cameraPosition: CameraPosition, cameraBounds: Lat
 				}
 			}
 
-			bindService(serviceIntent, serviceConnection, BIND_NOT_FOREGROUND)
-			startService(serviceIntent)
+			activity.bindService(serviceIntent, serviceConnection, Context.BIND_NOT_FOREGROUND)
+			activity.startService(serviceIntent)
 		} else {
 			Log.w("launchLocationService", "GPS not enabled")
 		}

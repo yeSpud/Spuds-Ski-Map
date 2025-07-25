@@ -1,10 +1,12 @@
 package xyz.thespud.skimap.activities
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.util.Log
 import android.view.View
 import android.widget.TextView
 import androidx.annotation.AnyThread
+import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.FragmentActivity
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
@@ -25,9 +27,9 @@ import xyz.thespud.skimap.mapItem.MapMarker
 import xyz.thespud.skimap.mapItem.SkiRuns
 import kotlin.math.roundToInt
 
-abstract class InfoMapActivity(cameraPosition: CameraPosition, cameraBounds: LatLngBounds?, skiRuns: SkiRuns,
-                               showDebug: Boolean = false): MapHandler(cameraPosition, cameraBounds, skiRuns,
-	true, showDebug), GoogleMap.InfoWindowAdapter {
+abstract class InfoMapActivity(val activity: AppCompatActivity, cameraPosition: CameraPosition, cameraBounds: LatLngBounds?,
+                               skiRuns: SkiRuns, showDebug: Boolean = false): MapHandler(activity,
+	cameraPosition, cameraBounds, skiRuns, true, showDebug), GoogleMap.InfoWindowAdapter {
 
 	var circles: MutableList<Circle> = mutableListOf()
 
@@ -170,7 +172,7 @@ abstract class InfoMapActivity(cameraPosition: CameraPosition, cameraBounds: Lat
 			return null
 		}
 
-		val markerView: View = layoutInflater.inflate(R.layout.info_window, null)
+		val markerView: View = activity.layoutInflater.inflate(R.layout.info_window, null)
 		val name: TextView = markerView.findViewById(R.id.marker_name)
 
 		val markerInfo: MapMarker = marker.tag as MapMarker
@@ -182,9 +184,9 @@ abstract class InfoMapActivity(cameraPosition: CameraPosition, cameraBounds: Lat
 		val altitudeConversion = 3.280839895f
 
 		try {
-			altitude.text = getString(R.string.marker_altitude, (markerInfo.location.altitude * altitudeConversion).roundToInt())
+			altitude.text = activity.getString(R.string.marker_altitude, (markerInfo.location.altitude * altitudeConversion).roundToInt())
 		} catch (_: IllegalArgumentException) {
-			altitude.text = getString(R.string.marker_altitude, 0)
+			altitude.text = activity.getString(R.string.marker_altitude, 0)
 		}
 
 		val speed: TextView = markerView.findViewById(R.id.marker_speed)
@@ -193,9 +195,9 @@ abstract class InfoMapActivity(cameraPosition: CameraPosition, cameraBounds: Lat
 		val speedConversion = 0.44704f
 
 		try {
-			speed.text = getString(R.string.marker_speed, (markerInfo.location.speed / speedConversion).roundToInt())
+			speed.text = activity.getString(R.string.marker_speed, (markerInfo.location.speed / speedConversion).roundToInt())
 		} catch (_: IllegalArgumentException) {
-			speed.text = getString(R.string.marker_speed, 0)
+			speed.text = activity.getString(R.string.marker_speed, 0)
 		}
 
 		return markerView

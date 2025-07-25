@@ -1,10 +1,14 @@
 package xyz.thespud.skimap.activities
 
+import android.app.Activity
+import android.content.Context
 import android.util.Log
+import android.view.View
 import androidx.annotation.AnyThread
 import androidx.annotation.ColorRes
 import androidx.annotation.DrawableRes
 import androidx.annotation.RawRes
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.FragmentActivity
@@ -35,9 +39,9 @@ import xyz.thespud.skimap.mapItem.PolygonMapItem
 import xyz.thespud.skimap.mapItem.PolylineMapItem
 import xyz.thespud.skimap.mapItem.SkiRuns
 
-abstract class MapHandler(private val cameraPosition: CameraPosition, private val cameraBounds: LatLngBounds?,
-                          private val skiRuns: SkiRuns, private val drawOpaqueRuns: Boolean,
-                          private val showDebug: Boolean): FragmentActivity(), OnMapReadyCallback {
+abstract class MapHandler(private val activity: FragmentActivity, private val cameraPosition: CameraPosition,
+                          private val cameraBounds: LatLngBounds?, private val skiRuns: SkiRuns,
+                          private val drawOpaqueRuns: Boolean, private val showDebug: Boolean): OnMapReadyCallback {
 
 	internal lateinit var googleMap: GoogleMap
 
@@ -145,24 +149,21 @@ abstract class MapHandler(private val cameraPosition: CameraPosition, private va
 		googleMap.mapType = GoogleMap.MAP_TYPE_SATELLITE
 
 		// Load the various polylines and polygons onto the map.
-		lifecycleScope.launch(Dispatchers.Default) { loadSkiRuns() }
-
-		// Fix edge to edge behavior
-		ViewCompat.setOnApplyWindowInsetsListener(window.decorView.rootView) { v, insets ->
-			val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-			val lpad = systemBars.left
-			val tpad = systemBars.top
-			val rpad = systemBars.right
-			val bpad = systemBars.bottom
-
-			googleMap.setPadding(lpad, tpad, rpad, bpad)
-
-			insets
-		}
+		activity.lifecycleScope.launch(Dispatchers.Default) { loadSkiRuns() }
 
 		Log.d("onMapReady", "Running additional setup steps...")
 		additionalCallback.onMapReady(googleMap)
 		Log.d("onMapReady", "Finished setting up map.")
+	}
+
+	// For fixing edge to edge behavior
+	fun applyMapInsets(view: View) {
+		ViewCompat.setOnApplyWindowInsetsListener(view) { v, insets ->
+			val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+			googleMap.setPadding(systemBars.left, systemBars.top, systemBars.right,
+				systemBars.bottom)
+			insets
+		}
 	}
 
 	private suspend fun loadSkiRuns() = coroutineScope {
@@ -323,7 +324,7 @@ abstract class MapHandler(private val cameraPosition: CameraPosition, private va
 	}
 
 	private fun parseKmlFile(@RawRes file: Int): Iterable<KmlPlacemark> {
-		val kml = kmlLayer(googleMap, file, this)
+		val kml = kmlLayer(googleMap, file, activity)
 		if (kml.placemarks.spliterator().estimateSize() == 0L) {
 			Log.w("parseKmlFile", "No placemarks in kml file!")
 		}
@@ -345,7 +346,7 @@ abstract class MapHandler(private val cameraPosition: CameraPosition, private va
 				val coordinates: ArrayList<LatLng> = lineString.geometryObject
 
 				// Get the color of the polyline.
-				val argb = getColor(color)
+				val argb = activity.getColor(color)
 
 				val polylineMapItem = PolylineMapItem(placemark, icon)
 
@@ -389,7 +390,8 @@ abstract class MapHandler(private val cameraPosition: CameraPosition, private va
 
 				val kmlPolygon: KmlPolygon = placemark.geometry as KmlPolygon
 
-				val argb = getColor(color)
+				activity
+				val argb = activity.getColor(color)
 
 				/*val polygon = */withContext(Dispatchers.Main) {
 					googleMap.addPolygon {
