@@ -27,7 +27,7 @@ import xyz.thespud.skimap.mapItem.MapMarker
 import xyz.thespud.skimap.mapItem.SkiRuns
 import kotlin.math.roundToInt
 
-abstract class InfoMapActivity(val activity: AppCompatActivity, cameraPosition: CameraPosition, cameraBounds: LatLngBounds?,
+class InfoMapActivity(val activity: AppCompatActivity, cameraPosition: CameraPosition, cameraBounds: LatLngBounds?,
                                skiRuns: SkiRuns, showDebug: Boolean = false): MapHandler(activity,
 	cameraPosition, cameraBounds, skiRuns, true, showDebug), GoogleMap.InfoWindowAdapter {
 
@@ -43,19 +43,19 @@ abstract class InfoMapActivity(val activity: AppCompatActivity, cameraPosition: 
 
 	// FIXME Not being called when overridden
 	@SuppressLint("PotentialBehaviorOverride")
-	override val additionalCallback: OnMapReadyCallback = OnMapReadyCallback {
+	override val additionalCallback: OnMapReadyCallback = OnMapReadyCallback { map ->
 		Log.v("additionalCallback", "additionalCallback called for InfoMapActivity")
 
-		googleMap.setOnCircleClickListener {
+		map.setOnCircleClickListener {
 			Log.v("onCircleClicked", "Circle clicked!")
-			googleMap.setInfoWindowAdapter(this)
+			map.setInfoWindowAdapter(this)
 
 			val mapMarker = it.tag as MapMarker
 			val location = LatLng(mapMarker.location.latitude, mapMarker.location.longitude)
 
 			var marker = runMarker
 			if (marker == null) {
-				marker = googleMap.addMarker {
+				marker = map.addMarker {
 					position(location)
 					icon(mapMarker.markerColor)
 					title(mapMarker.name)
@@ -76,7 +76,7 @@ abstract class InfoMapActivity(val activity: AppCompatActivity, cameraPosition: 
 			runMarker = marker
 		}
 
-		googleMap.setOnInfoWindowCloseListener { it.isVisible = false }
+		map.setOnInfoWindowCloseListener { it.isVisible = false }
 	}
 
 	override fun destroy() {
@@ -98,7 +98,7 @@ abstract class InfoMapActivity(val activity: AppCompatActivity, cameraPosition: 
 				if (previousMapMarker.color != mapMarker.color) {
 
 					val polyline = withContext(Dispatchers.Main) {
-						googleMap.addPolyline {
+						googleMap?.addPolyline {
 							addAll(polylinePoints)
 							color(previousMapMarker.color)
 							zIndex(10.0F)
@@ -110,7 +110,11 @@ abstract class InfoMapActivity(val activity: AppCompatActivity, cameraPosition: 
 							visible(true)
 						}
 					}
-					polylines.add(polyline)
+
+					if (polyline != null) {
+						polylines.add(polyline)
+					}
+
 					polylinePoints.clear()
 					polylinePoints.add(location)
 				}
@@ -132,7 +136,7 @@ abstract class InfoMapActivity(val activity: AppCompatActivity, cameraPosition: 
 		for (mapMarker in loadedMapMarkers) {
 			val location = LatLng(mapMarker.location.latitude, mapMarker.location.longitude)
 
-			val circle = googleMap.addCircle { // FIXME this is using too much RAM & causes too much lag
+			val circle = googleMap?.addCircle { // FIXME this is using too much RAM & causes too much lag
 				center(location)
 				strokeColor(mapMarker.color)
 				fillColor(mapMarker.color)
@@ -141,8 +145,12 @@ abstract class InfoMapActivity(val activity: AppCompatActivity, cameraPosition: 
 				zIndex(50.0F)
 				visible(showDots)
 			}
-			circle.tag = mapMarker
-			circles.add(circle)
+
+			if (circle != null) {
+				circle.tag = mapMarker
+				circles.add(circle)
+			}
+
 		}
 
 		System.gc()
