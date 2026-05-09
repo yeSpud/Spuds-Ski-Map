@@ -30,8 +30,8 @@ import xyz.thespud.skimap.services.SkierLocationService
 import xyz.thespud.skimap.services.SkiingNotification.NOTIFICATION_PERMISSION
 
 class LiveMapActivity(val activity: FragmentActivity, cameraPosition: CameraPosition, cameraBounds: LatLngBounds?,
-                               skiRuns: SkiRuns, showDebug: Boolean = false): MapHandler(activity,
-	cameraPosition, cameraBounds, skiRuns, false, showDebug), GoogleMap.OnMyLocationClickListener {
+                      skiRuns: SkiRuns, otherIconCallback: CustomIcons, showDebug: Boolean = false): MapHandler(activity,
+	cameraPosition, cameraBounds, skiRuns, otherIconCallback, false, showDebug), GoogleMap.OnMyLocationClickListener {
 
 	var isMapSetup = false
 

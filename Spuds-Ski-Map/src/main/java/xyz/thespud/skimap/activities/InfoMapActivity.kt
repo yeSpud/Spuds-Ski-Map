@@ -28,8 +28,8 @@ import xyz.thespud.skimap.mapItem.SkiRuns
 import kotlin.math.roundToInt
 
 class InfoMapActivity(val activity: AppCompatActivity, cameraPosition: CameraPosition, cameraBounds: LatLngBounds?,
-                               skiRuns: SkiRuns, showDebug: Boolean = false): MapHandler(activity,
-	cameraPosition, cameraBounds, skiRuns, true, showDebug), GoogleMap.InfoWindowAdapter {
+                               skiRuns: SkiRuns, otherIconCallback: CustomIcons, showDebug: Boolean = false): MapHandler(activity,
+	cameraPosition, cameraBounds, skiRuns, otherIconCallback, true, showDebug), GoogleMap.InfoWindowAdapter {
 
 	var circles: MutableList<Circle> = mutableListOf()
 

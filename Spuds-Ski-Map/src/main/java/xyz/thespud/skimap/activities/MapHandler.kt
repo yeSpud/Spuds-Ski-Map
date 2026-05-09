@@ -1,14 +1,11 @@
 package xyz.thespud.skimap.activities
 
-import android.app.Activity
-import android.content.Context
 import android.util.Log
 import android.view.View
 import androidx.annotation.AnyThread
 import androidx.annotation.ColorRes
 import androidx.annotation.DrawableRes
 import androidx.annotation.RawRes
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.FragmentActivity
@@ -42,7 +39,7 @@ import xyz.thespud.skimap.mapItem.SkiRuns
 
 abstract class MapHandler(private val activity: FragmentActivity, private val cameraPosition: CameraPosition,
                           private val cameraBounds: LatLngBounds?, private val skiRuns: SkiRuns,
-                          private val drawOpaqueRuns: Boolean, private val showDebug: Boolean): OnMapReadyCallback {
+                          private val otherIconCallback: CustomIcons, private val drawOpaqueRuns: Boolean, private val showDebug: Boolean): OnMapReadyCallback {
 
 	internal var googleMap: GoogleMap? = null
 
@@ -304,15 +301,18 @@ abstract class MapHandler(private val activity: FragmentActivity, private val ca
 			Log.d(tag, "Adding other bounds")
 			val sanitizedOtherBounds = mutableListOf<PolygonMapItem>()
 
-			val iconRes = R.drawable.ic_missing // getOtherIcon("") // FIXME
-
-			val otherPolygons = loadPolygons(skiRuns.other, R.color.other_polygon_fill, iconRes)
+			val otherPolygons = loadPolygons(skiRuns.other, R.color.other_polygon_fill,
+				R.drawable.ic_missing)
 			for (polygon in otherPolygons) {
 				if (polygon.name == "Ski Area Bounds") {
 					Locations.skiAreaBounds = polygon
 					continue
 				}
-				sanitizedOtherBounds.add(polygon)
+
+				// Update the icon based on the name of the other location
+				val icon = otherIconCallback.getOtherIcon(polygon.name)
+				val sanitizedOther = PolygonMapItem(polygon.placemark, icon, polygon.points)
+				sanitizedOtherBounds.add(sanitizedOther)
 			}
 
 			Locations.otherBounds = sanitizedOtherBounds
