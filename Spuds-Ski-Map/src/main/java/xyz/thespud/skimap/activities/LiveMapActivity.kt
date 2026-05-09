@@ -29,7 +29,7 @@ import xyz.thespud.skimap.mapItem.SkiRuns
 import xyz.thespud.skimap.services.SkierLocationService
 import xyz.thespud.skimap.services.SkiingNotification.NOTIFICATION_PERMISSION
 
-abstract class LiveMapActivity(val activity: FragmentActivity, cameraPosition: CameraPosition, cameraBounds: LatLngBounds?,
+class LiveMapActivity(val activity: FragmentActivity, cameraPosition: CameraPosition, cameraBounds: LatLngBounds?,
                                skiRuns: SkiRuns, showDebug: Boolean = false): MapHandler(activity,
 	cameraPosition, cameraBounds, skiRuns, false, showDebug), GoogleMap.OnMyLocationClickListener {
 
@@ -38,7 +38,7 @@ abstract class LiveMapActivity(val activity: FragmentActivity, cameraPosition: C
 	var manuallyDisabled = false
 	private set
 	var isTrackingLocation = false
-	private var locationTrackingButton: MapOptionItem? = null
+	// private var locationTrackingButton: MapOptionItem? = null
 
 
 	private val serviceConnection = object : ServiceConnection {
@@ -114,13 +114,14 @@ abstract class LiveMapActivity(val activity: FragmentActivity, cameraPosition: C
 	@SuppressLint("MissingPermission")
 	fun setIsTracking(isTracking: Boolean) {
 		Log.d("setIsTracking", "Setting location tracking to $isTracking")
-		googleMap.isMyLocationEnabled = isTracking
+		googleMap?.isMyLocationEnabled = isTracking
 		isTrackingLocation = isTracking
 
+		/*
 		val button = locationTrackingButton ?: return
 		if (button.itemEnabled != isTracking) {
 			button.toggleOptionVisibility()
-		}
+		}*/
 	}
 
 	fun setManuallyDisabled(manuallyDisabled: Boolean) {
@@ -170,5 +171,4 @@ abstract class LiveMapActivity(val activity: FragmentActivity, cameraPosition: C
 	companion object {
 		const val permissionValue = 29500
 	}
-
 }
