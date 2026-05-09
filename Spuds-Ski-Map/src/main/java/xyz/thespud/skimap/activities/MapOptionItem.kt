@@ -16,6 +16,7 @@ import androidx.annotation.LayoutRes
 import androidx.annotation.UiThread
 import androidx.core.graphics.drawable.DrawableCompat
 import xyz.thespud.skimap.R
+import xyz.thespud.skimap.mapItem.Locations
 import xyz.thespud.skimap.mapItem.PolylineMapItem
 
 class MapOptionItem: LinearLayout {
@@ -145,24 +146,24 @@ open class MapOptionsDialog(private val layoutInflater: LayoutInflater, @LayoutR
 		val view: View = convertView ?: layoutInflater.inflate(menu, parent, false)
 
 		if (showChairliftImage == null) {
-			showChairliftImage = getRunOption(view, R.id.show_chairlift, map.chairliftPolylines, map)
+			showChairliftImage = getRunOption(view, R.id.show_chairlift, Locations.chairliftPolylines, map)
 		}
 
 		if (showGreenRunsImage == null) {
-			showGreenRunsImage = getRunOption(view, R.id.show_green_runs, map.greenRunPolylines, map)
+			showGreenRunsImage = getRunOption(view, R.id.show_green_runs, Locations.greenRunPolylines, map)
 
 		}
 
 		if (showBlueRunsImage == null) {
-			showBlueRunsImage = getRunOption(view, R.id.show_blue_runs, map.blueRunPolylines, map)
+			showBlueRunsImage = getRunOption(view, R.id.show_blue_runs, Locations.blueRunPolylines, map)
 		}
 
 		if (showBlackRunsImage == null) {
-			showBlackRunsImage = getRunOption(view, R.id.show_black_runs, map.blackRunPolylines, map)
+			showBlackRunsImage = getRunOption(view, R.id.show_black_runs, Locations.blackRunPolylines, map)
 		}
 
 		if (showDoubleBlackRunsImage == null) {
-			showDoubleBlackRunsImage = getRunOption(view, R.id.show_double_black_runs, map.doubleBlackRunPolylines,
+			showDoubleBlackRunsImage = getRunOption(view, R.id.show_double_black_runs, Locations.doubleBlackRunPolylines,
 				map)
 		}
 
@@ -186,27 +187,27 @@ open class MapOptionsDialog(private val layoutInflater: LayoutInflater, @LayoutR
 
 					isNightOnly = !isNightOnly
 
-					for (chairliftPolyline in chairliftPolylines) {
+					for (chairliftPolyline in Locations.chairliftPolylines) {
 						chairliftPolyline.togglePolyLineVisibility(chairliftPolyline.defaultVisibility,
 							isNightOnly)
 					}
 
-					for (greenRunPolyline in greenRunPolylines) {
+					for (greenRunPolyline in Locations.greenRunPolylines) {
 						greenRunPolyline.togglePolyLineVisibility(greenRunPolyline.defaultVisibility,
 							isNightOnly)
 					}
 
-					for (blueRunPolyline in blueRunPolylines) {
+					for (blueRunPolyline in Locations.blueRunPolylines) {
 						blueRunPolyline.togglePolyLineVisibility(blueRunPolyline.defaultVisibility,
 							isNightOnly)
 					}
 
-					for (blackRunPolyline in blackRunPolylines) {
+					for (blackRunPolyline in Locations.blackRunPolylines) {
 						blackRunPolyline.togglePolyLineVisibility(blackRunPolyline.defaultVisibility,
 							isNightOnly)
 					}
 
-					for (doubleBlackRunPolyline in doubleBlackRunPolylines) {
+					for (doubleBlackRunPolyline in Locations.doubleBlackRunPolylines) {
 						doubleBlackRunPolyline.togglePolyLineVisibility(doubleBlackRunPolyline.defaultVisibility,
 							isNightOnly)
 					}

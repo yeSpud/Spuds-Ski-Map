@@ -1,6 +1,7 @@
 package xyz.thespud.skimap.activities
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.ActivityManager
 import android.app.AlertDialog
 import android.content.ComponentName
@@ -14,68 +15,39 @@ import android.os.Build
 import android.os.IBinder
 import android.os.Process
 import android.util.Log
+import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
+import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.model.CameraPosition
-import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
-import com.google.android.gms.maps.model.Marker
-import com.google.maps.android.PolyUtil
-import com.google.maps.android.ktx.addMarker
 import xyz.thespud.skimap.R
 import xyz.thespud.skimap.mapItem.Locations
-import xyz.thespud.skimap.mapItem.MapMarker
 import xyz.thespud.skimap.mapItem.SkiRuns
-import xyz.thespud.skimap.services.ServiceCallbacks
 import xyz.thespud.skimap.services.SkierLocationService
 import xyz.thespud.skimap.services.SkiingNotification.NOTIFICATION_PERMISSION
 
-abstract class LiveMapActivity(activity: FragmentActivity,
-                               leftPadding: Int, topPadding: Int, rightPadding: Int, bottomPadding: Int,
-                               cameraPosition: CameraPosition, cameraBounds: LatLngBounds?, skiRuns: SkiRuns,
-                               showDebug: Boolean = false): MapHandler(activity, leftPadding, topPadding, rightPadding, bottomPadding,
-	cameraPosition, cameraBounds, skiRuns, false, showDebug), ServiceCallbacks {
-
-	private var locationMarker: Marker? = null
+class LiveMapActivity(val activity: FragmentActivity, cameraPosition: CameraPosition, cameraBounds: LatLngBounds?,
+                               skiRuns: SkiRuns, showDebug: Boolean = false): MapHandler(activity,
+	cameraPosition, cameraBounds, skiRuns, false, showDebug), GoogleMap.OnMyLocationClickListener {
 
 	var isMapSetup = false
-
-	var skierLocationService: SkierLocationService? = null
-	private set
-	private var bound = false
 
 	var manuallyDisabled = false
 	private set
 	var isTrackingLocation = false
-	private var locationTrackingButton: MapOptionItem? = null
+
 
 	private val serviceConnection = object : ServiceConnection {
 
 		override fun onServiceConnected(name: ComponentName?, service: IBinder) {
-			val binder = service as SkierLocationService.LocalBinder
-			skierLocationService = binder.getService()
-			bound = true
-			Log.v("serviceConnection", "Skier location service bound")
-			skierLocationService!!.setCallbacks(this@LiveMapActivity)
 			setIsTracking(true)
 		}
 
 		override fun onServiceDisconnected(name: ComponentName?) {
-
-			if (locationMarker != null) {
-				Log.v("serviceConnection", "Removing location marker")
-				locationMarker!!.remove()
-				locationMarker = null
-			}
-
-			skierLocationService?.setCallbacks(null)
-			activity.unbindService(this)
-			Log.v("serviceConnection", "Skier location service unbound")
-			skierLocationService = null
 			setIsTracking(false)
-			bound = false
 		}
 	}
 
@@ -108,79 +80,46 @@ abstract class LiveMapActivity(activity: FragmentActivity,
 			alertDialogBuilder.create().show()
 		}
 
-		googleMap.setPadding(leftPadding, topPadding, rightPadding, bottomPadding)
+		// googleMap.setPadding(leftPadding, topPadding, rightPadding, bottomPadding)
 		isMapSetup = true
 	}
 
-	override fun destroy() {
+	override fun onMyLocationClick(location: Location) {
+		Locations.updateLocations(location)
 
-		if (bound) {
-			skierLocationService?.setCallbacks(null)
-			activity.unbindService(serviceConnection)
-			skierLocationService = null
-			isTrackingLocation = false
-			bound = false
-		}
-
-		super.destroy()
-	}
-
-	override fun isInBounds(location: Location): Boolean {
-		if (skiAreaBounds != null) {
-			return PolyUtil.containsLocation(location.latitude, location.longitude,
-				skiAreaBounds!!.points, true)
-		}
-		return false
-	}
-
-	override fun getOnLocation(location: Location): MapMarker? {
-
-		var mapMarker = Locations.checkIfIOnChairlift(this)
+		var toast = Toast.makeText(activity, R.string.your_location, Toast.LENGTH_LONG)
+		var mapMarker = Locations.checkIfIOnChairlift()
 		if (mapMarker != null) {
-			return mapMarker
+			toast = Toast.makeText(activity, activity.getString(R.string.current_chairlift, mapMarker.name),
+				Toast.LENGTH_LONG)
 		}
 
-		mapMarker = Locations.checkIfOnRun(this)
+		mapMarker = Locations.checkIfOnRun()
 		if (mapMarker != null) {
-			return mapMarker
+			toast = Toast.makeText(activity, activity.getString(R.string.current_run, mapMarker.name),
+				Toast.LENGTH_LONG)
 		}
 
-		return null
-	}
-
-	override fun updateMapMarker(locationString: String) {
-		val location = Locations.currentLocation
-		if (location != null) {
-			if (locationMarker == null) {
-				locationMarker = googleMap.addMarker {
-					position(LatLng(location.latitude, location.longitude))
-					title(activity.resources.getString(R.string.your_location))
-				}
-			} else {
-
-				// Otherwise just update the LatLng location.
-				locationMarker!!.position = LatLng(location.latitude, location.longitude)
-			}
+		mapMarker = Locations.getInLocation()
+		if (mapMarker != null) {
+			toast = Toast.makeText(activity, activity.getString(R.string.current_other, mapMarker.name),
+				Toast.LENGTH_LONG)
 		}
+
+		toast.show()
 	}
 
-	override fun setIsTracking(isTracking: Boolean) {
+	// This will only get called when we have location permissions.
+	@SuppressLint("MissingPermission")
+	fun setIsTracking(isTracking: Boolean) {
 		Log.d("setIsTracking", "Setting location tracking to $isTracking")
+		googleMap?.isMyLocationEnabled = isTracking
 		isTrackingLocation = isTracking
-
-		val button = locationTrackingButton ?: return
-		if (button.itemEnabled != isTracking) {
-			button.toggleOptionVisibility()
-		}
 	}
 
-	override fun setManuallyDisabled(manuallyDisabled: Boolean) {
+	fun setManuallyDisabled(manuallyDisabled: Boolean) {
 		Log.d("setManuallyDisabled", "Setting manually disabled to $manuallyDisabled")
 		this.manuallyDisabled = manuallyDisabled
-	}
-
-	override fun getLaunchingActivity(): FragmentActivity {
-		return activity
 	}
 
 	fun launchLocationService() {
