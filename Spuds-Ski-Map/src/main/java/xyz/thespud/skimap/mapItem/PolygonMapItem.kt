@@ -18,7 +18,7 @@ class PolygonMapItem(
 			when (property) {
 				LIFTLINE_RUN_KEY -> {
 					val allLifts = property.split(":")[1]
-					metadata[LIFTLINE_RUN_KEY] = allLifts.split(", ").forEach { it.trim() }
+					metadata[LIFTLINE_RUN_KEY] = allLifts.split(",").forEach { it.trim() }
 				}
 			}
 		}
