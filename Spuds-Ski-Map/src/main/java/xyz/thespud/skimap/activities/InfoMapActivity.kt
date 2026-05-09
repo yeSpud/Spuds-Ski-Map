@@ -41,7 +41,6 @@ class InfoMapActivity(val activity: AppCompatActivity, cameraPosition: CameraPos
 
 	var loadedMapMarkers: Array<MapMarker> = emptyArray()
 
-	// FIXME Not being called when overridden
 	@SuppressLint("PotentialBehaviorOverride")
 	override val additionalCallback: OnMapReadyCallback = OnMapReadyCallback { map ->
 		Log.v("additionalCallback", "additionalCallback called for InfoMapActivity")
