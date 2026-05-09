@@ -116,7 +116,7 @@ class SkierLocationService : Service(), LocationListener {
 
 		// If we are not on the mountain stop the tracking.
 		if (!PolyUtil.containsLocation(location.latitude, location.longitude,
-				Locations.skiAreaBounds?.points, true)) {
+				Locations.skiAreaBounds.points, true)) {
 			Toast.makeText(this, R.string.out_of_bounds,
 				Toast.LENGTH_LONG).show()
 			SkiingNotification.cancelTrackingNotification(this)

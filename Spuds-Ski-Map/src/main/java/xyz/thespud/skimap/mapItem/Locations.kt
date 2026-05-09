@@ -24,7 +24,7 @@ object Locations {
 	var blackRunPolylines: List<PolylineMapItem> = emptyList()
 	var doubleBlackRunPolylines: List<PolylineMapItem> = emptyList()
 
-	var skiAreaBounds: PolygonMapItem? = null
+	lateinit var skiAreaBounds: PolygonMapItem
 
 	var otherBounds: List<PolygonMapItem> = emptyList()
 	var startingChairliftTerminals: List<PolygonMapItem> = emptyList()
