@@ -31,6 +31,7 @@ import com.google.maps.android.ktx.utils.kml.kmlLayer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import xyz.thespud.skimap.R
@@ -43,7 +44,7 @@ abstract class MapHandler(private val activity: FragmentActivity, private val ca
                           private val cameraBounds: LatLngBounds?, private val skiRuns: SkiRuns,
                           private val drawOpaqueRuns: Boolean, private val showDebug: Boolean): OnMapReadyCallback {
 
-	internal lateinit var googleMap: GoogleMap
+	internal var googleMap: GoogleMap? = null
 
 	var isNightOnly = false
 
@@ -105,7 +106,7 @@ abstract class MapHandler(private val activity: FragmentActivity, private val ca
 
 		// Clear the map if its not null.
 		Log.v("MapHandler", "Clearing map.")
-		googleMap.clear()
+		googleMap?.clear()
 
 		// This frees up a bunch of ram, so call the garbage collection to collect the free ram
 		System.gc()
@@ -122,14 +123,12 @@ abstract class MapHandler(private val activity: FragmentActivity, private val ca
 	 */
 	override fun onMapReady(map: GoogleMap) {
 		val tag = "onMapReady"
-
 		Log.v(tag, "Setting up map for the first time...")
-		googleMap = map
 
 		// Setup camera view logging.
 		if (showDebug) {
-			googleMap.setOnCameraIdleListener {
-				val cameraPosition: CameraPosition = googleMap.cameraPosition
+			map.setOnCameraIdleListener {
+				val cameraPosition: CameraPosition = map.cameraPosition
 
 				val cameraTag = "OnCameraIdle"
 				Log.d(cameraTag, "Bearing: ${cameraPosition.bearing}")
@@ -140,27 +139,29 @@ abstract class MapHandler(private val activity: FragmentActivity, private val ca
 		}
 
 		// Move the map camera view and set the view restrictions.
-		googleMap.moveCamera(CameraUpdateFactory.newCameraPosition(cameraPosition))
-		googleMap.setLatLngBoundsForCameraTarget(cameraBounds)
-		googleMap.setMinZoomPreference(MINIMUM_ZOOM)
-		googleMap.setMaxZoomPreference(MAXIMUM_ZOOM)
+		map.moveCamera(CameraUpdateFactory.newCameraPosition(cameraPosition))
+		map.setLatLngBoundsForCameraTarget(cameraBounds)
+		map.setMinZoomPreference(MINIMUM_ZOOM)
+		map.setMaxZoomPreference(MAXIMUM_ZOOM)
 
-		googleMap.isIndoorEnabled = false
-		googleMap.mapType = GoogleMap.MAP_TYPE_SATELLITE
+		map.isIndoorEnabled = false
+		map.mapType = GoogleMap.MAP_TYPE_SATELLITE
 
 		// Load the various polylines and polygons onto the map.
 		activity.lifecycleScope.launch(Dispatchers.Default) { loadSkiRuns() }
 
+		googleMap = map
+
 		Log.d("onMapReady", "Running additional setup steps...")
-		additionalCallback.onMapReady(googleMap)
+		additionalCallback.onMapReady(googleMap!!)
 		Log.d("onMapReady", "Finished setting up map.")
 	}
 
 	// For fixing edge to edge behavior
 	fun applyMapInsets(view: View) {
-		ViewCompat.setOnApplyWindowInsetsListener(view) { v, insets ->
+		ViewCompat.setOnApplyWindowInsetsListener(view) { view, insets ->
 			val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-			googleMap.setPadding(systemBars.left, systemBars.top, systemBars.right,
+			googleMap?.setPadding(systemBars.left, systemBars.top, systemBars.right,
 				systemBars.bottom)
 			insets
 		}
@@ -318,13 +319,17 @@ abstract class MapHandler(private val activity: FragmentActivity, private val ca
 			Log.d(tag, "Finished adding other bounds")
 		})
 
-		jobs.forEach { it.join() }
+		jobs.joinAll()
 		System.gc()
 		Log.v(tag, "Finished drawing polylines and polygons")
 	}
 
 	private fun parseKmlFile(@RawRes file: Int): Iterable<KmlPlacemark> {
-		val kml = kmlLayer(googleMap, file, activity)
+		if (googleMap == null) {
+			return emptyList()
+		}
+
+		val kml = kmlLayer(googleMap!!, file, activity)
 		if (kml.placemarks.spliterator().estimateSize() == 0L) {
 			Log.w("parseKmlFile", "No placemarks in kml file!")
 		}
@@ -352,7 +357,7 @@ abstract class MapHandler(private val activity: FragmentActivity, private val ca
 
 				// Create the polyline using the coordinates and other options.
 				val polyline = withContext(Dispatchers.Main) {
-					googleMap.addPolyline {
+					googleMap?.addPolyline {
 						addAll(coordinates)
 						color(argb)
 						if (polylineMapItem.metadata[PolylineMapItem.EASIEST_WAY_DOWN_KEY] != null) {
@@ -373,7 +378,9 @@ abstract class MapHandler(private val activity: FragmentActivity, private val ca
 					hashMap[polylineMapItem.name] = polylineMapItem
 				}
 
-				hashMap[polylineMapItem.name]!!.polylines.add(polyline)
+				if (polyline != null) {
+					hashMap[polylineMapItem.name]!!.polylines.add(polyline)
+				}
 			}
 
 			return@withContext hashMap.values.toList()
@@ -394,7 +401,7 @@ abstract class MapHandler(private val activity: FragmentActivity, private val ca
 				val argb = activity.getColor(color)
 
 				/*val polygon = */withContext(Dispatchers.Main) {
-					googleMap.addPolygon {
+					googleMap?.addPolygon {
 						addAll(kmlPolygon.outerBoundaryCoordinates)
 						clickable(false)
 						geodesic(true)
