@@ -4,15 +4,14 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.app.ActivityManager
 import android.app.AlertDialog
-import android.content.ComponentName
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.content.ServiceConnection
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.location.Location
 import android.location.LocationManager
 import android.os.Build
-import android.os.IBinder
 import android.os.Process
 import android.util.Log
 import android.widget.Toast
@@ -39,16 +38,12 @@ class LiveMapActivity(val activity: FragmentActivity, cameraPosition: CameraPosi
 	private set
 	var isTrackingLocation = false
 
+	private val startTrackingReceiver = object : BroadcastReceiver() {
+		override fun onReceive(context: Context?, intent: Intent?) { setIsTracking(true) }
+	}
 
-	private val serviceConnection = object : ServiceConnection {
-
-		override fun onServiceConnected(name: ComponentName?, service: IBinder) {
-			setIsTracking(true)
-		}
-
-		override fun onServiceDisconnected(name: ComponentName?) {
-			setIsTracking(false)
-		}
+	private val stopTrackingReceiver = object : BroadcastReceiver() {
+		override fun onReceive(context: Context?, intent: Intent?) { setIsTracking(false) }
 	}
 
 	override val additionalCallback: OnMapReadyCallback = OnMapReadyCallback {
@@ -80,7 +75,6 @@ class LiveMapActivity(val activity: FragmentActivity, cameraPosition: CameraPosi
 			alertDialogBuilder.create().show()
 		}
 
-		// googleMap.setPadding(leftPadding, topPadding, rightPadding, bottomPadding)
 		isMapSetup = true
 	}
 
@@ -154,15 +148,23 @@ class LiveMapActivity(val activity: FragmentActivity, cameraPosition: CameraPosi
 				}
 			}
 
-			activity.bindService(serviceIntent, serviceConnection, Context.BIND_NOT_FOREGROUND)
 			activity.startService(serviceIntent)
 		} else {
 			Log.w("launchLocationService", "GPS not enabled")
 		}
 	}
 
+	init {
+		ContextCompat.registerReceiver(activity, startTrackingReceiver,
+			IntentFilter(SkierLocationService.START_TRACKING_BROADCAST),
+			ContextCompat.RECEIVER_EXPORTED)
+
+		ContextCompat.registerReceiver(activity, stopTrackingReceiver,
+			IntentFilter(SkierLocationService.STOP_TRACKING_BROADCAST),
+			ContextCompat.RECEIVER_EXPORTED)
+	}
+
 	companion object {
 		const val permissionValue = 29500
 	}
-
 }

@@ -9,7 +9,6 @@ import android.content.pm.ServiceInfo
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
-import android.os.Binder
 import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
@@ -22,15 +21,6 @@ import xyz.thespud.skimap.activities.LiveMapActivity
 import xyz.thespud.skimap.mapItem.Locations
 
 class SkierLocationService : Service(), LocationListener {
-
-	inner class LocalBinder: Binder() {
-		fun getService(): SkierLocationService = this@SkierLocationService
-	}
-
-	// FIXME Memory leak here
-	private var binder: IBinder = LocalBinder()
-
-	// private var callback: LocationCallbacks? = null
 
 	private lateinit var locationManager: LocationManager
 
@@ -64,7 +54,6 @@ class SkierLocationService : Service(), LocationListener {
 					startForeground(SkiingNotification.TRACKING_SERVICE_ID, notification)
 				}
 
-				//callback?.onTrackingStarted()
 				sendBroadcast(Intent(START_TRACKING_BROADCAST))
 			}
 			STOP_TRACKING_INTENT -> {
@@ -124,7 +113,6 @@ class SkierLocationService : Service(), LocationListener {
 
 		Locations.updateLocations(location)
 
-		//callback?.onLocationUpdated(location)
 		sendBroadcast(Intent(UPDATE_TRACKING_BROADCAST))
 
 		val intent = Intent(this, LiveMapActivity::class.java)
@@ -148,18 +136,12 @@ class SkierLocationService : Service(), LocationListener {
 	}
 
 	fun stopService() {
-		//callback?.onTrackingStopped()
 		sendBroadcast(Intent(STOP_TRACKING_BROADCAST))
 		stopForeground(STOP_FOREGROUND_REMOVE)
 		stopSelf()
 	}
 
-	/*
-	fun setCallback(callback: LocationCallbacks) {
-		this.callback = callback
-	}*/
-
-	override fun onBind(intent: Intent?): IBinder { return binder }
+	override fun onBind(intent: Intent?): IBinder? { return null }
 
 	override fun onProviderEnabled(provider: String) {}
 
