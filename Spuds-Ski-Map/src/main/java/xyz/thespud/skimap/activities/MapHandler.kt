@@ -47,38 +47,6 @@ abstract class MapHandler(private val activity: FragmentActivity, private val ca
 
 	abstract val additionalCallback: OnMapReadyCallback
 
-	/*
-	var chairliftPolylines: List<PolylineMapItem> = emptyList()
-		private set
-	var greenRunPolylines: List<PolylineMapItem> = emptyList()
-		private set
-	var blueRunPolylines: List<PolylineMapItem> = emptyList()
-		private set
-	var blackRunPolylines: List<PolylineMapItem> = emptyList()
-		private set
-	var doubleBlackRunPolylines: List<PolylineMapItem> = emptyList()
-		private set
-
-	var skiAreaBounds: PolygonMapItem? = null
-		private set
-
-	var otherBounds: List<PolygonMapItem> = emptyList()
-		private set
-	var startingChairliftTerminals: List<PolygonMapItem> = emptyList()
-		private set
-	var endingChairliftTerminals: List<PolygonMapItem> = emptyList()
-		private set
-
-	var greenRunBounds: List<PolygonMapItem> = emptyList()
-		private set
-	var blueRunBounds: List<PolygonMapItem> = emptyList()
-		private set
-	var blackRunBounds: List<PolygonMapItem> = emptyList()
-		private set
-	var doubleBlackRunBounds: List<PolygonMapItem> = emptyList()
-		private set
-	 */
-
 	open fun destroy() {
 
 		for (chairliftPolyline in Locations.chairliftPolylines) {
@@ -158,8 +126,14 @@ abstract class MapHandler(private val activity: FragmentActivity, private val ca
 	fun applyMapInsets(view: View) {
 		ViewCompat.setOnApplyWindowInsetsListener(view) { view, insets ->
 			val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-			googleMap?.setPadding(systemBars.left, systemBars.top, systemBars.right,
-				systemBars.bottom)
+
+			val map = googleMap
+			if (map != null) {
+				map.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
+			} else {
+				Log.w("applyMapInsets", "Map has not been set up")
+			}
+
 			insets
 		}
 	}
@@ -400,7 +374,7 @@ abstract class MapHandler(private val activity: FragmentActivity, private val ca
 				activity
 				val argb = activity.getColor(color)
 
-				/*val polygon = */withContext(Dispatchers.Main) {
+				withContext(Dispatchers.Main) {
 					googleMap?.addPolygon {
 						addAll(kmlPolygon.outerBoundaryCoordinates)
 						clickable(false)

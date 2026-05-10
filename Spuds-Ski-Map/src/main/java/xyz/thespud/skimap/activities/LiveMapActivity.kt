@@ -75,6 +75,9 @@ class LiveMapActivity(val activity: FragmentActivity, cameraPosition: CameraPosi
 			alertDialogBuilder.create().show()
 		}
 
+		// Apply map insets to fix edge to edge behavior
+		applyMapInsets(activity.window.decorView)
+
 		isMapSetup = true
 	}
 
@@ -152,6 +155,12 @@ class LiveMapActivity(val activity: FragmentActivity, cameraPosition: CameraPosi
 		} else {
 			Log.w("launchLocationService", "GPS not enabled")
 		}
+	}
+
+	override fun destroy() {
+		super.destroy()
+		activity.unregisterReceiver(startTrackingReceiver)
+		activity.unregisterReceiver(stopTrackingReceiver)
 	}
 
 	init {
