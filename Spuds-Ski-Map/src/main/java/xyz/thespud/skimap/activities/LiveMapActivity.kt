@@ -14,6 +14,7 @@ import android.location.LocationManager
 import android.os.Build
 import android.os.Process
 import android.util.Log
+import android.view.View
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -28,9 +29,10 @@ import xyz.thespud.skimap.mapItem.SkiRuns
 import xyz.thespud.skimap.services.SkierLocationService
 import xyz.thespud.skimap.services.SkiingNotification.NOTIFICATION_PERMISSION
 
-class LiveMapActivity(val activity: FragmentActivity, cameraPosition: CameraPosition, cameraBounds: LatLngBounds?,
-                      skiRuns: SkiRuns, otherIconCallback: CustomIcons, showDebug: Boolean = false): MapHandler(activity,
-	cameraPosition, cameraBounds, skiRuns, otherIconCallback, false, showDebug), GoogleMap.OnMyLocationClickListener {
+class LiveMapActivity(val activity: FragmentActivity, view: View, cameraPosition: CameraPosition,
+                      cameraBounds: LatLngBounds?, skiRuns: SkiRuns, otherIconCallback: CustomIcons,
+                      showDebug: Boolean = false): MapHandler(activity, view, cameraPosition, cameraBounds,
+	skiRuns, otherIconCallback, false, showDebug), GoogleMap.OnMyLocationClickListener {
 
 	var isMapSetup = false
 
@@ -74,9 +76,6 @@ class LiveMapActivity(val activity: FragmentActivity, cameraPosition: CameraPosi
 			// Show the info popup about location.
 			alertDialogBuilder.create().show()
 		}
-
-		// Apply map insets to fix edge to edge behavior
-		applyMapInsets(activity.window.decorView)
 
 		isMapSetup = true
 	}

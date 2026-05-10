@@ -37,9 +37,10 @@ import xyz.thespud.skimap.mapItem.PolygonMapItem
 import xyz.thespud.skimap.mapItem.PolylineMapItem
 import xyz.thespud.skimap.mapItem.SkiRuns
 
-abstract class MapHandler(private val activity: FragmentActivity, private val cameraPosition: CameraPosition,
-                          private val cameraBounds: LatLngBounds?, private val skiRuns: SkiRuns,
-                          private val otherIconCallback: CustomIcons, private val drawOpaqueRuns: Boolean, private val showDebug: Boolean): OnMapReadyCallback {
+abstract class MapHandler(private val activity: FragmentActivity, private val view: View,
+                          private val cameraPosition: CameraPosition, private val cameraBounds: LatLngBounds?,
+                          private val skiRuns: SkiRuns, private val otherIconCallback: CustomIcons,
+                          private val drawOpaqueRuns: Boolean, private val showDebug: Boolean): OnMapReadyCallback {
 
 	internal var googleMap: GoogleMap? = null
 
@@ -115,6 +116,8 @@ abstract class MapHandler(private val activity: FragmentActivity, private val ca
 		// Load the various polylines and polygons onto the map.
 		activity.lifecycleScope.launch(Dispatchers.Default) { loadSkiRuns() }
 
+		applyMapInsets(view, map)
+
 		googleMap = map
 
 		Log.d("onMapReady", "Running additional setup steps...")
@@ -123,19 +126,19 @@ abstract class MapHandler(private val activity: FragmentActivity, private val ca
 	}
 
 	// For fixing edge to edge behavior
-	fun applyMapInsets(view: View) {
-		ViewCompat.setOnApplyWindowInsetsListener(view) { view, insets ->
-			val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+	fun applyMapInsets(view: View, map: GoogleMap) {
+		ViewCompat.setOnApplyWindowInsetsListener(view) { _, insets ->
+			Log.v("applyMapInsets", "Applying map insets...")
 
-			val map = googleMap
-			if (map != null) {
-				map.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-			} else {
-				Log.w("applyMapInsets", "Map has not been set up")
-			}
+			val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+			map.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
 
 			insets
 		}
+
+		// Request the insets be applied again since they may have already been applied to the view,
+		// and we want our newly set listener to run
+		view.requestApplyInsets()
 	}
 
 	private suspend fun loadSkiRuns() = coroutineScope {
