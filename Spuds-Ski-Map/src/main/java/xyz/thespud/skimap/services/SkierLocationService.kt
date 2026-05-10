@@ -100,9 +100,15 @@ class SkierLocationService : Service(), LocationListener {
 	override fun onLocationChanged(location: Location) {
 		Log.v(TAG, "Location updated")
 
+		val bounds = Locations.skiAreaBounds
+		if (bounds == null) {
+			Log.w(TAG, "Bounds not set before update")
+			return
+		}
+
 		// If we are not on the mountain stop the tracking.
 		if (!PolyUtil.containsLocation(location.latitude, location.longitude,
-				Locations.skiAreaBounds.points, true)) {
+				bounds.points, true)) {
 			Toast.makeText(this, R.string.out_of_bounds,
 				Toast.LENGTH_LONG).show()
 			SkiingNotification.cancelTrackingNotification(this)
