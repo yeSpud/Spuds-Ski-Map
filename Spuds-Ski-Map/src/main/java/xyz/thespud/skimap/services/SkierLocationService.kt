@@ -123,6 +123,10 @@ class SkierLocationService : Service(), LocationListener {
 		}
 
 		Locations.updateLocations(location)
+
+		//callback?.onLocationUpdated(location)
+		sendBroadcast(Intent(UPDATE_TRACKING_BROADCAST))
+
 		val intent = Intent(this, LiveMapActivity::class.java)
 
 		var mapMarker = Locations.getOnLocation()
@@ -138,9 +142,6 @@ class SkierLocationService : Service(), LocationListener {
 				applicationInfo.icon, R.string.current_other, mapMarker)
 			return
 		}
-
-		//callback?.onLocationUpdated(location)
-		sendBroadcast(Intent(UPDATE_TRACKING_BROADCAST))
 
 		SkiingNotification.updateTrackingNotification(this, intent,
 			applicationInfo.icon, getString(R.string.tracking_notice), null)
