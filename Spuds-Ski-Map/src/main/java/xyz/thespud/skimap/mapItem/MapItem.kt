@@ -5,7 +5,7 @@ import androidx.annotation.DrawableRes
 import com.google.maps.android.data.kml.KmlPlacemark
 import java.util.Collections
 
-abstract class MapItem(placemark: KmlPlacemark, @DrawableRes val icon: Int) {
+abstract class MapItem(val placemark: KmlPlacemark, @DrawableRes val icon: Int) {
 
 	val name: String
 

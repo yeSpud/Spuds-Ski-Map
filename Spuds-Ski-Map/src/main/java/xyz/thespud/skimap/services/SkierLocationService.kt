@@ -3,40 +3,24 @@ package xyz.thespud.skimap.services
 import android.Manifest
 import android.app.Notification
 import android.app.Service
-import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
-import android.graphics.Color
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
-import android.os.Binder
 import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
 import android.util.Log
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
-import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.maps.android.PolyUtil
 import xyz.thespud.skimap.R
 import xyz.thespud.skimap.activities.LiveMapActivity
-import xyz.thespud.skimap.activities.MapHandler
 import xyz.thespud.skimap.mapItem.Locations
-import xyz.thespud.skimap.mapItem.Locations.chairliftIcon
-import xyz.thespud.skimap.mapItem.MapMarker
-import xyz.thespud.skimap.mapItem.PolygonMapItem
-import java.lang.ref.WeakReference
 
 class SkierLocationService : Service(), LocationListener {
-
-	inner class LocalBinder: Binder() {
-		fun getService(): SkierLocationService = this@SkierLocationService
-	}
-
-	// FIXME Memory leak here
-	private var binder: IBinder = LocalBinder()
 
 	private lateinit var locationManager: LocationManager
 
@@ -69,6 +53,8 @@ class SkierLocationService : Service(), LocationListener {
 				} else {
 					startForeground(SkiingNotification.TRACKING_SERVICE_ID, notification)
 				}
+
+				sendBroadcast(Intent(START_TRACKING_BROADCAST))
 			}
 			STOP_TRACKING_INTENT -> {
 				Log.d(TAG, "Stopping foreground service")
@@ -114,9 +100,15 @@ class SkierLocationService : Service(), LocationListener {
 	override fun onLocationChanged(location: Location) {
 		Log.v(TAG, "Location updated")
 
+		val bounds = Locations.skiAreaBounds
+		if (bounds == null) {
+			Log.w(TAG, "Bounds not set before update")
+			return
+		}
+
 		// If we are not on the mountain stop the tracking.
 		if (!PolyUtil.containsLocation(location.latitude, location.longitude,
-				Locations.skiAreaBounds.points, true)) {
+				bounds.points, true)) {
 			Toast.makeText(this, R.string.out_of_bounds,
 				Toast.LENGTH_LONG).show()
 			SkiingNotification.cancelTrackingNotification(this)
@@ -126,6 +118,9 @@ class SkierLocationService : Service(), LocationListener {
 		}
 
 		Locations.updateLocations(location)
+
+		sendBroadcast(Intent(UPDATE_TRACKING_BROADCAST))
+
 		val intent = Intent(this, LiveMapActivity::class.java)
 
 		var mapMarker = Locations.getOnLocation()
@@ -147,14 +142,12 @@ class SkierLocationService : Service(), LocationListener {
 	}
 
 	fun stopService() {
+		sendBroadcast(Intent(STOP_TRACKING_BROADCAST))
 		stopForeground(STOP_FOREGROUND_REMOVE)
 		stopSelf()
 	}
 
-
-	override fun onBind(intent: Intent?): IBinder? {
-		return binder
-	}
+	override fun onBind(intent: Intent?): IBinder? { return null }
 
 	override fun onProviderEnabled(provider: String) {}
 
@@ -168,8 +161,10 @@ class SkierLocationService : Service(), LocationListener {
 		const val TAG = "SkierLocationService"
 
 		const val STOP_TRACKING_INTENT = "xyz.thespud.skimap.SkierLocationService.Stop"
-
 		const val START_TRACKING_INTENT = "xyz.thespud.skimap.SkierLocationService.Start"
 
+		const val START_TRACKING_BROADCAST = "xyz.thespud.skimap.SkierLocationService.Broadcast.Start"
+		const val UPDATE_TRACKING_BROADCAST = "xyz.thespud.skimap.SkierLocationService.Broadcast.Update"
+		const val STOP_TRACKING_BROADCAST = "xyz.thespud.skimap.SkierLocationService.Broadcast.Stop"
 	}
 }

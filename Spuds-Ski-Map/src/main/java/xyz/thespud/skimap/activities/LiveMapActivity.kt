@@ -4,17 +4,17 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.app.ActivityManager
 import android.app.AlertDialog
-import android.content.ComponentName
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.content.ServiceConnection
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.location.Location
 import android.location.LocationManager
 import android.os.Build
-import android.os.IBinder
 import android.os.Process
 import android.util.Log
+import android.view.View
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -29,9 +29,10 @@ import xyz.thespud.skimap.mapItem.SkiRuns
 import xyz.thespud.skimap.services.SkierLocationService
 import xyz.thespud.skimap.services.SkiingNotification.NOTIFICATION_PERMISSION
 
-class LiveMapActivity(val activity: FragmentActivity, cameraPosition: CameraPosition, cameraBounds: LatLngBounds?,
-                               skiRuns: SkiRuns, showDebug: Boolean = false): MapHandler(activity,
-	cameraPosition, cameraBounds, skiRuns, false, showDebug), GoogleMap.OnMyLocationClickListener {
+class LiveMapActivity(val activity: FragmentActivity, view: View, cameraPosition: CameraPosition,
+                      cameraBounds: LatLngBounds?, skiRuns: SkiRuns, otherIconCallback: CustomIcons,
+                      showDebug: Boolean = false): MapHandler(activity, view, cameraPosition, cameraBounds,
+	skiRuns, otherIconCallback, false, showDebug), GoogleMap.OnMyLocationClickListener {
 
 	var isMapSetup = false
 
@@ -39,16 +40,12 @@ class LiveMapActivity(val activity: FragmentActivity, cameraPosition: CameraPosi
 	private set
 	var isTrackingLocation = false
 
+	private val startTrackingReceiver = object : BroadcastReceiver() {
+		override fun onReceive(context: Context?, intent: Intent?) { setIsTracking(true) }
+	}
 
-	private val serviceConnection = object : ServiceConnection {
-
-		override fun onServiceConnected(name: ComponentName?, service: IBinder) {
-			setIsTracking(true)
-		}
-
-		override fun onServiceDisconnected(name: ComponentName?) {
-			setIsTracking(false)
-		}
+	private val stopTrackingReceiver = object : BroadcastReceiver() {
+		override fun onReceive(context: Context?, intent: Intent?) { setIsTracking(false) }
 	}
 
 	override val additionalCallback: OnMapReadyCallback = OnMapReadyCallback {
@@ -80,7 +77,6 @@ class LiveMapActivity(val activity: FragmentActivity, cameraPosition: CameraPosi
 			alertDialogBuilder.create().show()
 		}
 
-		// googleMap.setPadding(leftPadding, topPadding, rightPadding, bottomPadding)
 		isMapSetup = true
 	}
 
@@ -154,15 +150,29 @@ class LiveMapActivity(val activity: FragmentActivity, cameraPosition: CameraPosi
 				}
 			}
 
-			activity.bindService(serviceIntent, serviceConnection, Context.BIND_NOT_FOREGROUND)
 			activity.startService(serviceIntent)
 		} else {
 			Log.w("launchLocationService", "GPS not enabled")
 		}
 	}
 
+	override fun destroy() {
+		super.destroy()
+		activity.unregisterReceiver(startTrackingReceiver)
+		activity.unregisterReceiver(stopTrackingReceiver)
+	}
+
+	init {
+		ContextCompat.registerReceiver(activity, startTrackingReceiver,
+			IntentFilter(SkierLocationService.START_TRACKING_BROADCAST),
+			ContextCompat.RECEIVER_EXPORTED)
+
+		ContextCompat.registerReceiver(activity, stopTrackingReceiver,
+			IntentFilter(SkierLocationService.STOP_TRACKING_BROADCAST),
+			ContextCompat.RECEIVER_EXPORTED)
+	}
+
 	companion object {
 		const val permissionValue = 29500
 	}
-
 }

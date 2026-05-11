@@ -1,14 +1,11 @@
 package xyz.thespud.skimap.activities
 
-import android.app.Activity
-import android.content.Context
 import android.util.Log
 import android.view.View
 import androidx.annotation.AnyThread
 import androidx.annotation.ColorRes
 import androidx.annotation.DrawableRes
 import androidx.annotation.RawRes
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.FragmentActivity
@@ -40,8 +37,9 @@ import xyz.thespud.skimap.mapItem.PolygonMapItem
 import xyz.thespud.skimap.mapItem.PolylineMapItem
 import xyz.thespud.skimap.mapItem.SkiRuns
 
-abstract class MapHandler(private val activity: FragmentActivity, private val cameraPosition: CameraPosition,
-                          private val cameraBounds: LatLngBounds?, private val skiRuns: SkiRuns,
+abstract class MapHandler(private val activity: FragmentActivity, private val view: View,
+                          private val cameraPosition: CameraPosition, private val cameraBounds: LatLngBounds?,
+                          private val skiRuns: SkiRuns, private val otherIconCallback: CustomIcons,
                           private val drawOpaqueRuns: Boolean, private val showDebug: Boolean): OnMapReadyCallback {
 
 	internal var googleMap: GoogleMap? = null
@@ -49,38 +47,6 @@ abstract class MapHandler(private val activity: FragmentActivity, private val ca
 	var isNightOnly = false
 
 	abstract val additionalCallback: OnMapReadyCallback
-
-	/*
-	var chairliftPolylines: List<PolylineMapItem> = emptyList()
-		private set
-	var greenRunPolylines: List<PolylineMapItem> = emptyList()
-		private set
-	var blueRunPolylines: List<PolylineMapItem> = emptyList()
-		private set
-	var blackRunPolylines: List<PolylineMapItem> = emptyList()
-		private set
-	var doubleBlackRunPolylines: List<PolylineMapItem> = emptyList()
-		private set
-
-	var skiAreaBounds: PolygonMapItem? = null
-		private set
-
-	var otherBounds: List<PolygonMapItem> = emptyList()
-		private set
-	var startingChairliftTerminals: List<PolygonMapItem> = emptyList()
-		private set
-	var endingChairliftTerminals: List<PolygonMapItem> = emptyList()
-		private set
-
-	var greenRunBounds: List<PolygonMapItem> = emptyList()
-		private set
-	var blueRunBounds: List<PolygonMapItem> = emptyList()
-		private set
-	var blackRunBounds: List<PolygonMapItem> = emptyList()
-		private set
-	var doubleBlackRunBounds: List<PolygonMapItem> = emptyList()
-		private set
-	 */
 
 	open fun destroy() {
 
@@ -150,6 +116,8 @@ abstract class MapHandler(private val activity: FragmentActivity, private val ca
 		// Load the various polylines and polygons onto the map.
 		activity.lifecycleScope.launch(Dispatchers.Default) { loadSkiRuns() }
 
+		applyMapInsets(view, map)
+
 		googleMap = map
 
 		Log.d("onMapReady", "Running additional setup steps...")
@@ -158,13 +126,19 @@ abstract class MapHandler(private val activity: FragmentActivity, private val ca
 	}
 
 	// For fixing edge to edge behavior
-	fun applyMapInsets(view: View) {
-		ViewCompat.setOnApplyWindowInsetsListener(view) { view, insets ->
+	fun applyMapInsets(view: View, map: GoogleMap) {
+		ViewCompat.setOnApplyWindowInsetsListener(view) { _, insets ->
+			Log.v("applyMapInsets", "Applying map insets...")
+
 			val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-			googleMap?.setPadding(systemBars.left, systemBars.top, systemBars.right,
-				systemBars.bottom)
+			map.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
+
 			insets
 		}
+
+		// Request the insets be applied again since they may have already been applied to the view,
+		// and we want our newly set listener to run
+		view.requestApplyInsets()
 	}
 
 	private suspend fun loadSkiRuns() = coroutineScope {
@@ -304,15 +278,18 @@ abstract class MapHandler(private val activity: FragmentActivity, private val ca
 			Log.d(tag, "Adding other bounds")
 			val sanitizedOtherBounds = mutableListOf<PolygonMapItem>()
 
-			val iconRes = R.drawable.ic_missing // getOtherIcon("") // FIXME
-
-			val otherPolygons = loadPolygons(skiRuns.other, R.color.other_polygon_fill, iconRes)
+			val otherPolygons = loadPolygons(skiRuns.other, R.color.other_polygon_fill,
+				R.drawable.ic_missing)
 			for (polygon in otherPolygons) {
 				if (polygon.name == "Ski Area Bounds") {
 					Locations.skiAreaBounds = polygon
 					continue
 				}
-				sanitizedOtherBounds.add(polygon)
+
+				// Update the icon based on the name of the other location
+				val icon = otherIconCallback.getOtherIcon(polygon.name)
+				val sanitizedOther = PolygonMapItem(polygon.placemark, icon, polygon.points)
+				sanitizedOtherBounds.add(sanitizedOther)
 			}
 
 			Locations.otherBounds = sanitizedOtherBounds
@@ -400,7 +377,7 @@ abstract class MapHandler(private val activity: FragmentActivity, private val ca
 				activity
 				val argb = activity.getColor(color)
 
-				/*val polygon = */withContext(Dispatchers.Main) {
+				withContext(Dispatchers.Main) {
 					googleMap?.addPolygon {
 						addAll(kmlPolygon.outerBoundaryCoordinates)
 						clickable(false)
