@@ -30,38 +30,179 @@ You'll also want to include the following permissions:
 <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
 ```
 
-## Main Map activity
-In order to use the LiveMapActivity you will need to have a class that implements the `getOtherIcon` function.
-The easiest way to do this is to declare a private inner class within your maps activity such as the following:
+## Live tracking map activity
+To use the live tracking map activity for tracking and showing the user's current location on the mountain 
+simply declare the LiveMapActivty class with the following:
 ```kotlin
-private inner class MyActiveMap(leftPadding: Int, topPadding: Int, rightPadding: Int, bottomPadding: Int, skiRuns: SkiRuns): 
-	LiveMapActivity(this@MyMapActivity, leftPadding, topPadding, rightPadding, bottomPadding, 
-	CameraPosition.Builder().target(/*LatLng Here*/).tilt(/*Tilt here*/).bearing(/*Bearing here*/).zoom(/*Zoom here*/).build(), 
+LiveMapActivity(this, binding.root, 
+	CameraPosition.Builder()
+		.target(/*LatLng Here*/)
+		.tilt(/*Tilt here*/)
+		.bearing(/*Bearing here*/)
+		.zoom(/*Zoom level here*/).build(),
 	LatLngBounds(/*Your pair of LatLng-s here - or null if there are no camera bounds*/), 
-	skiRuns) {
-	
-	override fun getOtherIcon(name: String): Int? {
-		// Use this function to assign icons to "other" locations on the map (such as lodges, parking lots, etc.)
-		// It returns a drawable resource ID, or null if none exists
-		return null
-	}
+	skiRuns, MyCustomIconsClass())
+```
+The first argument is the context, the second is the view the map will be bound to, 
+then followed by the initial camera position for when the activity starts and the map is ready.
+This is then followed by the LatLngBounds for the map - 
+essentially making sure the user cant scroll too far away (though this can be null if you don't want bounds to be set).
 
-	override fun onLocationUpdated(location: Location) {
-		// Use this function for when you want to do something with the user's new location
-	}
+The SkiRuns dataclass is next, and holds all the polylines and polygons for the map. 
+This must be initialized with the miscellaneous polygons 
+(which contain parking lots, lodging, but most importantly the ski area bounds). 
+Following that any additional polylines and polygons may be set like the following:
+```kotlin
+val skiRuns = SkiRuns(R.raw.misc)
+skiRuns.liftsPolyline = R.raw.lifts
+skiRuns.greenRunPolylines = ...
+skiRuns.blueRunPolylines = ...
+skiRuns.blackRunPolylines = ...
+skiRuns.doubleBlackRunPolylines = ...
+skiRuns.startingLiftBounds = ...
+skiRuns.endingLiftPolylines = ...
+skiRuns.greenRunBounds = ...
+skiRuns.blueRunBounds = ...
+skiRuns.blackRunBounds = ...
+skiRuns.doubleBlackRunBounds = ...
+```
 
-	override fun onTrackingStopped() {
-		// Use this function for when you want to do something once location tracking has stopped.
+THe final required argument is a class that implements the CustomIcons interface. 
+This class is used for setting custom icons for the miscellaneous areas (such as parking lots, lodges, etc.), 
+and will eventually be extended to include custom icons for ski lifts.
+
+For now the class only needs to consist of a single overridden function `getOtherIcon` 
+which distinguishes between different areas by name, and as such a switch statement can be used to set the icon for each area:
+```kotlin
+class MyCustomIconsClass: CustomIcons {
+
+	override fun getOtherIcon(name: String): Int {
+		Log.d("getOtherIcon", "Getting icon for $name")
+		val icon: Int = when (name) {
+			"Parking Lot A" -> R.drawable.ic_parking
+			"Lodge 1" -> R.drawable.ic_lodge
+			// ...
+			else -> {
+				Log.w("getOtherIcon", "$name does not have an icon")
+				R.drawable.ic_missing
+			}
+		}
+
+		return icon
 	}
 }
 ```
 
+### Receiving location update broadcasts
+The live location tracking is done though the SkierLocationService class which is started automatically by the LiveMapActivity class.
+If you wish to have something happen when the location tracking starts, stops, or updates (such as writing the location to a database)
+then declare these BroadcastReceivers:
+```kotlin
+private val startTrackingReceiver = object : BroadcastReceiver() {
+	override fun onReceive(context: Context?, intent: Intent?) {
+		Log.d("startTrackingReceiver", "Received broadcast to start tracking")
+		
+		// ...
+		
+	}
+}
+
+private val updateTrackingReceiver = object : BroadcastReceiver() {
+	override fun onReceive(context: Context?, intent: Intent?) {
+		Log.d("updateTrackingReceiver", "Received broadcast to update tracking")
+		
+		// ...
+		
+	}
+}
+
+private val stopTrackingReceiver = object : BroadcastReceiver() {
+	override fun onReceive(context: Context?, intent: Intent?) {
+		Log.d("stopTrackingReceiver", "Received broadcast to stop tracking")
+		
+		// ...
+		
+	}
+}
+
+```
+
+Be sure to follow this up by registering the receivers within the `onCreate` method of your activity:
+```kotlin
+ContextCompat.registerReceiver(context, startTrackingReceiver,
+	IntentFilter(SkierLocationService.START_TRACKING_BROADCAST),
+	ContextCompat.RECEIVER_EXPORTED)
+
+ContextCompat.registerReceiver(context, updateTrackingReceiver,
+	IntentFilter(SkierLocationService.UPDATE_TRACKING_BROADCAST),
+	ContextCompat.RECEIVER_EXPORTED)
+
+ContextCompat.registerReceiver(thicontexts, stopTrackingReceiver,
+	IntentFilter(SkierLocationService.STOP_TRACKING_BROADCAST),
+	ContextCompat.RECEIVER_EXPORTED)
+```
+and unregister them within the `onDestroy` method:
+```kotlin
+unregisterReceiver(startTrackingReceiver)
+unregisterReceiver(updateTrackingReceiver)
+unregisterReceiver(stopTrackingReceiver)
+```
+
+### Location tracking permissions
+Location tracking requires location permissions to be grated. 
+This permission request can be handled in your activity with the following code:
+```kotlin
+override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
+	super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+
+	when (requestCode) {
+
+		// If request is canceled, the result arrays are empty.
+		permissionValue -> {
+			if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+				launchLocationService()
+			}
+		}
+	}
+}
+```
+
+All-in-all a prospective activity would look something like this:
 ```kotlin
 class MyMapActivity : FragmentActivity() {
 	// ...
-	
-	private var map: MyActiveMap? = null
 
+	private lateinit var map: LiveMapActivity
+
+	// ...
+
+	private val startTrackingReceiver = object : BroadcastReceiver() {
+		override fun onReceive(context: Context?, intent: Intent?) {
+			Log.d("startTrackingReceiver", "Received broadcast to start tracking")
+
+			// ...
+
+		}
+	}
+
+	private val updateTrackingReceiver = object : BroadcastReceiver() {
+		override fun onReceive(context: Context?, intent: Intent?) {
+			Log.d("updateTrackingReceiver", "Received broadcast to update tracking")
+
+			// ...
+
+		}
+	}
+
+	private val stopTrackingReceiver = object : BroadcastReceiver() {
+		override fun onReceive(context: Context?, intent: Intent?) {
+			Log.d("stopTrackingReceiver", "Received broadcast to stop tracking")
+
+			// ...
+
+		}
+	}
+	
 	// ...
 
 	override fun onCreate(savedInstanceState: Bundle?) {
@@ -71,7 +212,7 @@ class MyMapActivity : FragmentActivity() {
 		// ...
 
 		// Load the map polylines and polygons.
-		// This object REQUIRES the other object in order to get the ski area bounds, 
+		// This class REQUIRES the misc file in order to get the ski area bounds, 
 		// but the rest are optional and are set after the fact. 
 		// If there are no bounds or polylines simply dont add it.
 		val skiRuns = SkiRuns(R.raw.other)
@@ -86,45 +227,70 @@ class MyMapActivity : FragmentActivity() {
 		skiRuns.blueRunBounds = ...
 		skiRuns.blackRunBounds = ...
 		skiRuns.doubleBlackRunBounds = ...
-				
-
-		// Get the padding for a full screen map if desired - this setup assumes your using databinding 
-		ViewCompat.setOnApplyWindowInsetsListener(binding.root) { view: View, insets: WindowInsetsCompat ->
-			val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-			lpad = systemBars.left
-			tpad = systemBars.top
-			rpad = systemBars.right
-			bpad = systemBars.bottom
-
-			// Additional padding adjustments here...
-
-			// Setup the map handler.
-			map = MyActiveMap(lpad, tpad, rpad, bpad, skiRuns)
-
-			// ...
-
-			// Obtain the SupportMapFragment and get notified when the map is ready to be used.
-			val mapFragment = supportFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
-			mapFragment.getMapAsync(map!!)
-			
-			// ...
-			
-			insets
-		}
 
 		//...
 
+		map = LiveMapActivity(this, binding.root, CameraPosition.Builder()
+			.target(/*LatLng Here*/)
+			.tilt(/*Tilt here*/)
+			.bearing(/*Bearing here*/)
+			.zoom(/*Zoom level here*/).build(),
+			null, skiRuns, Icons()
+		)
+
+		// Obtain the SupportMapFragment and get notified when the map is ready to be used.
+		val mapFragment = supportFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
+		mapFragment.getMapAsync(map)
+		
+		// ...
+		
+		ContextCompat.registerReceiver(this, startTrackingReceiver,
+			IntentFilter(SkierLocationService.START_TRACKING_BROADCAST),
+			ContextCompat.RECEIVER_EXPORTED)
+		
+		ContextCompat.registerReceiver(this, updateTrackingReceiver,
+			IntentFilter(SkierLocationService.UPDATE_TRACKING_BROADCAST),
+			ContextCompat.RECEIVER_EXPORTED)
+		
+		ContextCompat.registerReceiver(this, stopTrackingReceiver,
+			IntentFilter(SkierLocationService.STOP_TRACKING_BROADCAST),
+			ContextCompat.RECEIVER_EXPORTED)
+		
+		// ...
+		
 	}
 
 	// ...
 
 	override fun onDestroy() {
 		// ...
-		map?.destroy()
+
+		unregisterReceiver(startTrackingReceiver)
+		unregisterReceiver(updateTrackingReceiver)
+		unregisterReceiver(stopTrackingReceiver)
+		
+		// ...
+		map.destroy()
 		// ...
 		super.onDestroy()
 	}
 
+	// ...
+
+	override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
+		super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+
+		when (requestCode) {
+
+			// If request is canceled, the result arrays are empty.
+			permissionValue -> {
+				if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+					launchLocationService()
+				}
+			}
+		}
+	}
+	
 	// ...
 
 }
@@ -225,31 +391,3 @@ Allows for starting and stopping location tracking
 
 ### Info Map Options dialog
 Allows for hiding and showing location dots on the final map
-
-
-## Location tracking service
-The location tracking service is called SkierLocationService, 
-and requires location services to be grated. This permission request can be done in the main activity with the following code:
-```kotlin
-class MyMapActivity : FragmentActivity() {
-	// ... 
-
-	override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
-		super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-
-		when (requestCode) {
-
-			// If request is cancelled, the result arrays are empty.
-			permissionValue -> {
-				if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-					launchLocationService()
-				}
-			}
-		}
-	}
-	
-	// ...
-	
-}
-
-```
