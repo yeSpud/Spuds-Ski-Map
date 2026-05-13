@@ -235,8 +235,7 @@ class MyMapActivity : FragmentActivity() {
 			.tilt(/*Tilt here*/)
 			.bearing(/*Bearing here*/)
 			.zoom(/*Zoom level here*/).build(),
-			null, skiRuns, Icons()
-		)
+			null, skiRuns, MyCustomIconsClass())
 
 		// Obtain the SupportMapFragment and get notified when the map is ready to be used.
 		val mapFragment = supportFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
@@ -297,26 +296,26 @@ class MyMapActivity : FragmentActivity() {
 ```
 
 ## Info Map activity
+The InfoMapActivity is less intense than the LiveMapActivity as it doesn't have to deal with tracking 
+and displaying the user's live location. As such it just needs to be declared with the following:
 ```kotlin
-private inner class MyInfoMap(lpad: Int, tpad: Int, rpad: Int, bpad: Int, skiRuns: SkiRuns) : 
-	InfoMapActivity(this@MyInfoMapActivity, lpad, tpad, rpad, bpad,
-		CameraPosition.Builder().target(/*LatLng Here*/).tilt(/*Tilt here*/).bearing(/*Bearing here*/).zoom(/*Zoom here*/).build(),
-		LatLngBounds(/*Your pair of LatLng-s here - or null if there are no camera bounds*/),
-		skiRuns) {
-
-	override fun getOtherIcon(name: String): Int? {
-		// Use this function to assign icons to "other" locations on the map (such as lodges, parking lots, etc.)
-		// It returns a drawable resource ID, or null if none exists
-		return null
-	}
-}
+InfoMapActivity(this, binding.map,
+	CameraPosition.Builder()
+		.target(/*LatLng Here*/)
+		.tilt(/*Tilt here*/)
+		.bearing(/*Bearing here*/)
+		.zoom(/*Zoom level here*/).build(),
+	LatLngBounds(/*Your pair of LatLng-s here - or null if there are no camera bounds*/),
+	skiRuns, MyCustomIconsClass())
 ```
+The arguments from the LiveMapActivity also apply for the InfoMapActivity.
 
+As such a prospective info map activity should look something like this:
 ```kotlin
 class MyInfoMapActivity : FragmentActivity() {
 	// ...
 	
-	private lateinit var map: MyInfoMap
+	private lateinit var map: InfoMapActivity
 	
 	// ...
 	
@@ -327,7 +326,7 @@ class MyInfoMapActivity : FragmentActivity() {
 		// ...
 
 		// Load the map polylines and polygons.
-		// This object REQUIRES the other object in order to get the ski area bounds, 
+		// This class REQUIRES the misc file in order to get the ski area bounds, 
 		// but the rest are optional and are set after the fact. 
 		// If there are no bounds or polylines simply dont add it.
 		val skiRuns = SkiRuns(R.raw.other)
@@ -343,31 +342,21 @@ class MyInfoMapActivity : FragmentActivity() {
 		skiRuns.blackRunBounds = ...
 		skiRuns.doubleBlackRunBounds = ...
 
-		// Get the padding for a full screen map if desired - this setup assumes your using databinding 
-		ViewCompat.setOnApplyWindowInsetsListener(binding.root) { view: View, insets: WindowInsetsCompat ->
-			val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-			lpad = systemBars.left
-			tpad = systemBars.top
-			rpad = systemBars.right
-			bpad = systemBars.bottom
-
-			// Additional padding adjustments here...
-
-			// Setup the map handler.
-			map = MyInfoMap(lpad, tpad, rpad, bpad, skiRuns)
-
-			// ...
-
-			// Obtain the SupportMapFragment and get notified when the map is ready to be used.
-			val mapFragment = supportFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
-			mapFragment.getMapAsync(map!!)
-
-			// ...
-
-			insets
-		}
-
 		//...
+
+		// Setup the map handler.
+		map = InfoMapActivity(this, binding.map, CameraPosition.Builder()
+			.target(/*LatLng Here*/)
+			.tilt(/*Tilt here*/)
+			.bearing(/*Bearing here*/)
+			.zoom(/*Zoom level here*/).build(),
+			null, skiRuns, MyCustomIconsClass())
+
+		// Obtain the SupportMapFragment and get notified when the map is ready to be used.
+		val mapFragment = supportFragmentManager.findFragmentById(R.id.activity_map) as SupportMapFragment
+		mapFragment.getMapAsync(map)
+		
+		// ...
 				
 	}
 	
