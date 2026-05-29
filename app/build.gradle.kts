@@ -2,18 +2,16 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
 	alias(libs.plugins.android.application)
-	alias(libs.plugins.kotlin.android)
-
 }
 
 android {
 	namespace = "xyz.thespud.skimap"
-	compileSdk = 36
+	compileSdk = 37
 
 	defaultConfig {
 		applicationId = "xyz.thespud.skimap"
 		minSdk = 23
-		targetSdk = 36
+		targetSdk = 37
 		versionCode = 1
 		versionName = "1.0"
 
@@ -33,6 +31,7 @@ android {
 		sourceCompatibility = JavaVersion.VERSION_11
 		targetCompatibility = JavaVersion.VERSION_11
 	}
+	compileSdkMinor = 0
 }
 
 kotlin {
@@ -42,7 +41,6 @@ kotlin {
 }
 
 dependencies {
-
 	implementation(libs.androidx.core.ktx)
 	implementation(libs.androidx.appcompat)
 	implementation(libs.material)

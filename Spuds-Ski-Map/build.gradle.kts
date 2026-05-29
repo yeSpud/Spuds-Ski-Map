@@ -1,16 +1,14 @@
-import com.vanniktech.maven.publish.SonatypeHost
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
 	alias(libs.plugins.android.library)
-	alias(libs.plugins.kotlin.android)
-	id("com.vanniktech.maven.publish") version "0.32.0"
+	alias(libs.plugins.maven.publish)
 	signing
 }
 
 android {
 	namespace = "xyz.thespud.skimap"
-	compileSdk = 36
+	compileSdk = 37
 
 	defaultConfig {
 
@@ -32,6 +30,7 @@ android {
 		sourceCompatibility = JavaVersion.VERSION_11
 		targetCompatibility = JavaVersion.VERSION_11
 	}
+	compileSdkMinor = 0
 }
 
 kotlin {
@@ -42,7 +41,7 @@ kotlin {
 }
 
 mavenPublishing {
-	publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL, true)
+	publishToMavenCentral()
 	signAllPublications()
 }
 
