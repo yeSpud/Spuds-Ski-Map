@@ -33,8 +33,14 @@ class PolylineMapItem(placemark: KmlPlacemark, icon: Int = R.drawable.ic_missing
 	fun togglePolyLineVisibility(visible: Boolean, nightRunsOnly: Boolean) {
 		defaultVisibility = visible
 
+		var onlyShowNightRun = true
+		val isRunNightRun = metadata[NIGHT_RUN_KEY] as Boolean?
+		if (nightRunsOnly && isRunNightRun != null) {
+			onlyShowNightRun = isRunNightRun
+		}
+
 		for (polyline in polylines) {
-			polyline.isVisible = defaultVisibility && (metadata[NIGHT_RUN_KEY] == nightRunsOnly)
+			polyline.isVisible = defaultVisibility && onlyShowNightRun
 		}
 	}
 
