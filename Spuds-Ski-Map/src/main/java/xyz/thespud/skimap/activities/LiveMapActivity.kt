@@ -9,22 +9,19 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
-import android.location.Location
 import android.location.LocationManager
 import android.os.Build
 import android.os.Process
 import android.util.Log
 import android.view.View
-import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
-import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLngBounds
 import xyz.thespud.skimap.R
-import xyz.thespud.skimap.mapItem.Locations
+import xyz.thespud.skimap.locationmanager.CustomIcons
 import xyz.thespud.skimap.mapItem.SkiRuns
 import xyz.thespud.skimap.services.SkierLocationService
 import xyz.thespud.skimap.services.SkiingNotification.NOTIFICATION_PERMISSION
@@ -32,7 +29,7 @@ import xyz.thespud.skimap.services.SkiingNotification.NOTIFICATION_PERMISSION
 class LiveMapActivity(val activity: FragmentActivity, view: View, cameraPosition: CameraPosition,
                       cameraBounds: LatLngBounds?, skiRuns: SkiRuns, otherIconCallback: CustomIcons,
                       showDebug: Boolean = false): MapHandler(activity, view, cameraPosition, cameraBounds,
-	skiRuns, otherIconCallback, false, showDebug), GoogleMap.OnMyLocationClickListener {
+	skiRuns, otherIconCallback, false, showDebug)/*, GoogleMap.OnMyLocationClickListener */ {
 
 	var isMapSetup = false
 
@@ -80,6 +77,8 @@ class LiveMapActivity(val activity: FragmentActivity, view: View, cameraPosition
 		isMapSetup = true
 	}
 
+	// fixme callback not being called when location dot is clicked
+	/*
 	override fun onMyLocationClick(location: Location) {
 		Locations.updateLocations(location)
 
@@ -98,6 +97,7 @@ class LiveMapActivity(val activity: FragmentActivity, view: View, cameraPosition
 
 		toast.show()
 	}
+	 */
 
 	// This will only get called when we have location permissions.
 	@SuppressLint("MissingPermission")
