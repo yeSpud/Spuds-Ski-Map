@@ -1,10 +1,11 @@
-package xyz.thespud.skimap.activities
+package xyz.thespud.skimap.dialogs
 
 import android.content.Intent
 import android.view.View
 import android.view.ViewGroup
 import androidx.annotation.LayoutRes
 import xyz.thespud.skimap.R
+import xyz.thespud.skimap.activities.LiveMapActivity
 import xyz.thespud.skimap.services.SkierLocationService
 
 open class LiveMapOptionsDialog(private val liveMapActivity: LiveMapActivity,
@@ -21,7 +22,8 @@ open class LiveMapOptionsDialog(private val liveMapActivity: LiveMapActivity,
 			toggleLocationTracking.setOnClickListener {
 				if (liveMapActivity.isTrackingLocation) {
 					liveMapActivity.setManuallyDisabled(true)
-					val serviceIntent = Intent(liveMapActivity.activity, SkierLocationService::class.java)
+					val serviceIntent =
+						Intent(liveMapActivity.activity, SkierLocationService::class.java)
 					liveMapActivity.activity.stopService(serviceIntent)
 				} else {
 					liveMapActivity.setManuallyDisabled(false)

@@ -1,4 +1,4 @@
-package xyz.thespud.skimap.activities
+package xyz.thespud.skimap.dialogs
 
 import android.util.Log
 import android.view.View
@@ -6,6 +6,7 @@ import android.view.ViewGroup
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 import xyz.thespud.skimap.R
+import xyz.thespud.skimap.activities.InfoMapActivity
 
 open class InfoMapOptionsDialog(private val infoMapActivity: InfoMapActivity): MapOptionsDialog(
 	infoMapActivity.activity.layoutInflater, R.layout.info_map_options_v2, infoMapActivity) {

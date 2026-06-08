@@ -1,4 +1,4 @@
-package xyz.thespud.skimap.activities
+package xyz.thespud.skimap.dialogs
 
 import android.content.Context
 import android.graphics.drawable.Drawable
@@ -16,6 +16,7 @@ import androidx.annotation.LayoutRes
 import androidx.annotation.UiThread
 import androidx.core.graphics.drawable.DrawableCompat
 import xyz.thespud.skimap.R
+import xyz.thespud.skimap.activities.MapHandler
 import xyz.thespud.skimap.mapItem.Locations
 import xyz.thespud.skimap.mapItem.PolylineMapItem
 
@@ -223,7 +224,8 @@ open class MapOptionsDialog(private val layoutInflater: LayoutInflater, @LayoutR
 
 	companion object {
 		private fun getRunOption(view: View, @IdRes resId: Int, runs: List<PolylineMapItem>,
-		                         map: MapHandler): MapOptionItem? {
+		                         map: MapHandler
+		): MapOptionItem? {
 			val optionsView: MapOptionItem? = view.findViewById(resId)
 			if (optionsView == null) {
 				Log.w("getRunObject", "Unable to find that option!")
