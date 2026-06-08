@@ -3,22 +3,12 @@ package xyz.thespud.skimap.dialogs
 import android.content.Context
 import android.graphics.drawable.Drawable
 import android.util.AttributeSet
-import android.util.Log
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
-import android.widget.BaseAdapter
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
-import androidx.annotation.IdRes
-import androidx.annotation.LayoutRes
 import androidx.annotation.UiThread
 import androidx.core.graphics.drawable.DrawableCompat
 import xyz.thespud.skimap.R
-import xyz.thespud.skimap.activities.MapHandler
-import xyz.thespud.skimap.mapItem.Locations
-import xyz.thespud.skimap.mapItem.PolylineMapItem
 
 class MapOptionItem: LinearLayout {
 
@@ -94,146 +84,5 @@ class MapOptionItem: LinearLayout {
 
 		itemEnabled = !itemEnabled
 		invalidate()
-	}
-}
-
-class OnMapItemClicked(private val polylineMapItems: List<PolylineMapItem>, private val map: MapHandler): View.OnClickListener {
-
-	override fun onClick(mapOptionItem: View?) {
-
-		if (mapOptionItem == null || mapOptionItem !is MapOptionItem) {
-			return
-		}
-
-		for (polylineMapItem in polylineMapItems) {
-			polylineMapItem.togglePolyLineVisibility(!polylineMapItem.defaultVisibility, map.isNightOnly)
-		}
-
-		mapOptionItem.toggleOptionVisibility()
-	}
-}
-
-open class MapOptionsDialog(private val layoutInflater: LayoutInflater, @LayoutRes private val menu: Int,
-                            private val map: MapHandler) : BaseAdapter() {
-
-	private var showChairliftImage: MapOptionItem? = null
-
-	private var showGreenRunsImage: MapOptionItem? = null
-
-	private var showBlueRunsImage: MapOptionItem? = null
-
-	private var showBlackRunsImage: MapOptionItem? = null
-
-	private var showDoubleBlackRunsImage: MapOptionItem? = null
-
-	private var showTerrainParksImage: MapOptionItem? = null
-
-	private var showNightRunsImage: MapOptionItem? = null
-
-	override fun getCount(): Int {
-		return 1
-	}
-
-	override fun getItem(position: Int): Any {
-		return position // Todo properly implement me?
-	}
-
-	override fun getItemId(position: Int): Long {
-		return position.toLong() // Todo properly implement me?
-	}
-
-	override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
-
-		val view: View = convertView ?: layoutInflater.inflate(menu, parent, false)
-
-		if (showChairliftImage == null) {
-			showChairliftImage = getRunOption(view, R.id.show_chairlift, Locations.chairliftPolylines, map)
-		}
-
-		if (showGreenRunsImage == null) {
-			showGreenRunsImage = getRunOption(view, R.id.show_green_runs, Locations.greenRunPolylines, map)
-
-		}
-
-		if (showBlueRunsImage == null) {
-			showBlueRunsImage = getRunOption(view, R.id.show_blue_runs, Locations.blueRunPolylines, map)
-		}
-
-		if (showBlackRunsImage == null) {
-			showBlackRunsImage = getRunOption(view, R.id.show_black_runs, Locations.blackRunPolylines, map)
-		}
-
-		if (showDoubleBlackRunsImage == null) {
-			showDoubleBlackRunsImage = getRunOption(view, R.id.show_double_black_runs, Locations.doubleBlackRunPolylines,
-				map)
-		}
-
-		if (showTerrainParksImage == null) {
-			showTerrainParksImage = getRunOption(view, R.id.show_terrain_parks, emptyList(), map) // FIXME Add terrain park
-		}
-
-		if (showNightRunsImage == null) {
-			val nightRunImage: MapOptionItem? = view.findViewById(R.id.show_night_runs)
-			if (nightRunImage == null) {
-				Log.w("getView", "Unable to find night run option")
-				return view
-			}
-
-			nightRunImage.setOnClickListener {
-				if (it == null || it !is MapOptionItem) {
-					return@setOnClickListener
-				}
-
-				with(map) {
-
-					isNightOnly = !isNightOnly
-
-					for (chairliftPolyline in Locations.chairliftPolylines) {
-						chairliftPolyline.togglePolyLineVisibility(chairliftPolyline.defaultVisibility,
-							isNightOnly)
-					}
-
-					for (greenRunPolyline in Locations.greenRunPolylines) {
-						greenRunPolyline.togglePolyLineVisibility(greenRunPolyline.defaultVisibility,
-							isNightOnly)
-					}
-
-					for (blueRunPolyline in Locations.blueRunPolylines) {
-						blueRunPolyline.togglePolyLineVisibility(blueRunPolyline.defaultVisibility,
-							isNightOnly)
-					}
-
-					for (blackRunPolyline in Locations.blackRunPolylines) {
-						blackRunPolyline.togglePolyLineVisibility(blackRunPolyline.defaultVisibility,
-							isNightOnly)
-					}
-
-					for (doubleBlackRunPolyline in Locations.doubleBlackRunPolylines) {
-						doubleBlackRunPolyline.togglePolyLineVisibility(doubleBlackRunPolyline.defaultVisibility,
-							isNightOnly)
-					}
-				}
-
-				it.toggleOptionVisibility()
-			}
-			showNightRunsImage = nightRunImage
-		}
-
-		return view
-	}
-
-	companion object {
-		private fun getRunOption(view: View, @IdRes resId: Int, runs: List<PolylineMapItem>,
-		                         map: MapHandler
-		): MapOptionItem? {
-			val optionsView: MapOptionItem? = view.findViewById(resId)
-			if (optionsView == null) {
-				Log.w("getRunObject", "Unable to find that option!")
-				return null
-			}
-
-			optionsView.setOnClickListener(OnMapItemClicked(runs, map))
-			return optionsView
-		}
 	}
 }
