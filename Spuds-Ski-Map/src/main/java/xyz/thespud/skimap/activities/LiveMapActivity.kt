@@ -84,15 +84,9 @@ class LiveMapActivity(val activity: FragmentActivity, view: View, cameraPosition
 		Locations.updateLocations(location)
 
 		var toast = Toast.makeText(activity, R.string.your_location, Toast.LENGTH_LONG)
-		var mapMarker = Locations.checkIfIOnChairlift()
+		var mapMarker = Locations.getOnLocation()
 		if (mapMarker != null) {
 			toast = Toast.makeText(activity, activity.getString(R.string.current_chairlift, mapMarker.name),
-				Toast.LENGTH_LONG)
-		}
-
-		mapMarker = Locations.checkIfOnRun()
-		if (mapMarker != null) {
-			toast = Toast.makeText(activity, activity.getString(R.string.current_run, mapMarker.name),
 				Toast.LENGTH_LONG)
 		}
 
