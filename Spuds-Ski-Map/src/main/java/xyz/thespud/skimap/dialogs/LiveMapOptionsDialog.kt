@@ -22,8 +22,8 @@ open class LiveMapOptionsDialog(private val liveMapActivity: LiveMapActivity,
 			toggleLocationTracking.setOnClickListener {
 				if (liveMapActivity.isTrackingLocation) {
 					liveMapActivity.setManuallyDisabled(true)
-					val serviceIntent =
-						Intent(liveMapActivity.activity, SkierLocationService::class.java)
+
+					val serviceIntent = Intent(liveMapActivity.activity, SkierLocationService::class.java)
 					liveMapActivity.activity.stopService(serviceIntent)
 				} else {
 					liveMapActivity.setManuallyDisabled(false)
