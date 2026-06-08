@@ -22,7 +22,7 @@ import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLngBounds
 import xyz.thespud.skimap.R
 import xyz.thespud.skimap.locationmanager.CustomIcons
-import xyz.thespud.skimap.mapItem.SkiRuns
+import xyz.thespud.skimap.locationmanager.SkiRuns
 import xyz.thespud.skimap.services.SkierLocationService
 import xyz.thespud.skimap.services.SkiingNotification.NOTIFICATION_PERMISSION
 

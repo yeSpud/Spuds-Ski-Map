@@ -23,7 +23,7 @@ import kotlinx.coroutines.withContext
 import xyz.thespud.skimap.R
 import xyz.thespud.skimap.locationmanager.CustomIcons
 import xyz.thespud.skimap.mapItem.MapMarker
-import xyz.thespud.skimap.mapItem.SkiRuns
+import xyz.thespud.skimap.locationmanager.SkiRuns
 import kotlin.math.roundToInt
 
 class InfoMapActivity(val activity: AppCompatActivity, view: View, cameraPosition: CameraPosition,

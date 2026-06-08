@@ -36,7 +36,7 @@ import xyz.thespud.skimap.locationmanager.CustomIcons
 import xyz.thespud.skimap.locationmanager.Locations
 import xyz.thespud.skimap.mapItem.PolygonMapItem
 import xyz.thespud.skimap.mapItem.PolylineMapItem
-import xyz.thespud.skimap.mapItem.SkiRuns
+import xyz.thespud.skimap.locationmanager.SkiRuns
 
 abstract class MapHandler(private val activity: FragmentActivity, private val view: View,
                           private val cameraPosition: CameraPosition, private val cameraBounds: LatLngBounds?,

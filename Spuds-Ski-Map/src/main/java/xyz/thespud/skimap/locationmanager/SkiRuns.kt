@@ -1,4 +1,4 @@
-package xyz.thespud.skimap.mapItem
+package xyz.thespud.skimap.locationmanager
 
 import androidx.annotation.RawRes
 
