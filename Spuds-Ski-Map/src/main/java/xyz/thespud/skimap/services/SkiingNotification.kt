@@ -59,7 +59,6 @@ object SkiingNotification {
 	fun displaySkiingActivity(context: Context, intentToLaunch: Intent?,
 	                          @DrawableRes appIcon: Int, @StringRes textResource: Int, mapMarker: MapMarker) {
 		val text: String = context.getString(textResource, mapMarker.name)
-		// serviceCallbacks.updateMapMarker(text)
 		updateTrackingNotification(context, intentToLaunch, appIcon, text, mapMarker.icon)
 	}
 
