@@ -9,7 +9,7 @@ import androidx.annotation.IdRes
 import androidx.annotation.LayoutRes
 import xyz.thespud.skimap.R
 import xyz.thespud.skimap.activities.MapHandler
-import xyz.thespud.skimap.mapItem.Locations
+import xyz.thespud.skimap.locationmanager.Locations
 import xyz.thespud.skimap.mapItem.PolylineMapItem
 
 open class MapOptionsDialog(private val layoutInflater: LayoutInflater, @LayoutRes private val menu: Int,

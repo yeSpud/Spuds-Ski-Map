@@ -1,4 +1,4 @@
-package xyz.thespud.skimap.activities
+package xyz.thespud.skimap.locationmanager
 
 interface CustomIcons {
 

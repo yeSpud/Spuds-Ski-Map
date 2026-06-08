@@ -32,7 +32,8 @@ import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import xyz.thespud.skimap.R
-import xyz.thespud.skimap.mapItem.Locations
+import xyz.thespud.skimap.locationmanager.CustomIcons
+import xyz.thespud.skimap.locationmanager.Locations
 import xyz.thespud.skimap.mapItem.PolygonMapItem
 import xyz.thespud.skimap.mapItem.PolylineMapItem
 import xyz.thespud.skimap.mapItem.SkiRuns

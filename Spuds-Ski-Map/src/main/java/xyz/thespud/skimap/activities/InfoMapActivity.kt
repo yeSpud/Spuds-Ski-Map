@@ -1,13 +1,11 @@
 package xyz.thespud.skimap.activities
 
 import android.annotation.SuppressLint
-import android.app.Activity
 import android.util.Log
 import android.view.View
 import android.widget.TextView
 import androidx.annotation.AnyThread
 import androidx.appcompat.app.AppCompatActivity
-import androidx.fragment.app.FragmentActivity
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.model.CameraPosition
@@ -23,6 +21,7 @@ import com.google.maps.android.ktx.addPolyline
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import xyz.thespud.skimap.R
+import xyz.thespud.skimap.locationmanager.CustomIcons
 import xyz.thespud.skimap.mapItem.MapMarker
 import xyz.thespud.skimap.mapItem.SkiRuns
 import kotlin.math.roundToInt

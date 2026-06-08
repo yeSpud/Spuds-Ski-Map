@@ -1,4 +1,4 @@
-package xyz.thespud.skimap.mapItem
+package xyz.thespud.skimap.locationmanager
 
 import android.graphics.Color
 import android.location.Location
@@ -8,7 +8,9 @@ import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.maps.android.PolyUtil
 import xyz.thespud.skimap.R
-import xyz.thespud.skimap.activities.MapHandler
+import xyz.thespud.skimap.mapItem.MapMarker
+import xyz.thespud.skimap.mapItem.PolygonMapItem
+import xyz.thespud.skimap.mapItem.PolylineMapItem
 
 object Locations {
 
@@ -100,15 +102,19 @@ object Locations {
 		val startingTerminal = isInStartingTerminal()
 		if (startingTerminal != null) {
 			isOnChairlift = startingTerminal
-			return MapMarker(startingTerminal, location, chairliftIcon,
-				BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED), Color.RED)
+			return MapMarker(
+				startingTerminal, location, chairliftIcon,
+				BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED), Color.RED
+			)
 		}
 
 		val endingTerminal = isInEndingTerminal()
 		if (endingTerminal != null) {
 			isOnChairlift = null
-			return MapMarker(endingTerminal, location, chairliftIcon,
-				BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED), Color.RED)
+			return MapMarker(
+				endingTerminal, location, chairliftIcon,
+				BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED), Color.RED
+			)
 		}
 
 		if (isOnChairlift != null) {
@@ -127,9 +133,11 @@ object Locations {
 					if (liftlineRuns != null) {
 						for (liftlineRun in liftlineRuns as List<*>) {
 							if (liftlineRun == isOnChairlift!!) {
-								return MapMarker(isOnChairlift!!, location, chairliftIcon,
+								return MapMarker(
+									isOnChairlift!!, location, chairliftIcon,
 									BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED),
-									Color.RED)
+									Color.RED
+								)
 							}
 						}
 					}
@@ -203,9 +211,11 @@ object Locations {
 		for (other: PolygonMapItem in otherBounds) {
 			if (PolyUtil.containsLocation(location.latitude, location.longitude,
 					other.points, true)) {
-				return MapMarker(other.name, location, other.icon,
+				return MapMarker(
+					other.name, location, other.icon,
 					BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_MAGENTA),
-					Color.MAGENTA)
+					Color.MAGENTA
+				)
 			}
 		}
 
