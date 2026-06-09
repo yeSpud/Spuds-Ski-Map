@@ -19,7 +19,7 @@ class InfoLocationManager(skiRuns: SkiRuns, icons: CustomIcons, googleMap: Googl
 		isOnChairlift = null
 	}
 
-	private fun getRunMarker(polygonMapItems: List<PolygonMapItem>, location: Location,
+	fun getRunMarker(polygonMapItems: List<PolygonMapItem>, location: Location,
 	                         markerColor: BitmapDescriptor, color: Int): InfoMapMarker? {
 		val mapItem = locationInBounds(location, polygonMapItems)
 		if (mapItem != null) { return InfoMapMarker(mapItem, location, markerColor, color) }

@@ -44,8 +44,8 @@ class PolylineMapItem(placemark: KmlPlacemark, icon: Int = R.drawable.ic_missing
 		}
 	}
 
-	override fun parseMetadata(properties: List<String>): HashMap<String, Any> {
-		val metadata = hashMapOf<String, Any>()
+	override fun parseMetadata(properties: List<String>) {
+		//val metadata = hashMapOf<String, Any>()
 		for (property in properties) {
 			Log.v("parseMetadata", "Parsing property $property")
 			when (property) {
@@ -53,7 +53,7 @@ class PolylineMapItem(placemark: KmlPlacemark, icon: Int = R.drawable.ic_missing
 				EASIEST_WAY_DOWN_KEY -> metadata[EASIEST_WAY_DOWN_KEY] = true
 			}
 		}
-		return metadata
+		//return metadata
 	}
 
 	companion object {

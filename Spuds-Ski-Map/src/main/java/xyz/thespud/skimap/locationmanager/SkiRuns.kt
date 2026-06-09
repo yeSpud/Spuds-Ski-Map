@@ -37,5 +37,6 @@ data class SkiRuns(@RawRes val bounds: Int) {
 	@RawRes
 	var doubleBlackRunBounds: Int? = null
 
-	@RawRes val other: Int? = null
+	@RawRes
+	var other: Int? = null
 }
