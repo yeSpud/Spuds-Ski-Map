@@ -18,7 +18,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.graphics.createBitmap
 import androidx.fragment.app.FragmentActivity
 import xyz.thespud.skimap.R
-import xyz.thespud.skimap.mapItem.MapMarker
+import xyz.thespud.skimap.mapItem.MapItem
 import kotlin.reflect.KClass
 
 object SkiingNotification {
@@ -57,7 +57,7 @@ object SkiingNotification {
 	}
 
 	fun displaySkiingActivity(context: Context, intentToLaunch: Intent?,
-	                          @DrawableRes appIcon: Int, @StringRes textResource: Int, mapMarker: MapMarker) {
+	                          @DrawableRes appIcon: Int, @StringRes textResource: Int, mapMarker: MapItem) {
 		val text: String = context.getString(textResource, mapMarker.name)
 		updateTrackingNotification(context, intentToLaunch, appIcon, text, mapMarker.icon)
 	}

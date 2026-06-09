@@ -18,7 +18,7 @@ import androidx.core.app.ActivityCompat
 import com.google.maps.android.PolyUtil
 import xyz.thespud.skimap.R
 import xyz.thespud.skimap.activities.LiveMapActivity
-import xyz.thespud.skimap.mapItem.Locations
+import xyz.thespud.skimap.locationmanager.LiveLocationManager
 
 class SkierLocationService : Service(), LocationListener {
 
@@ -100,7 +100,7 @@ class SkierLocationService : Service(), LocationListener {
 	override fun onLocationChanged(location: Location) {
 		Log.v(TAG, "Location updated")
 
-		val bounds = Locations.skiAreaBounds
+		val bounds = LiveLocationManager.skiAreaBounds
 		if (bounds == null) {
 			Log.w(TAG, "Bounds not set before update")
 			return
@@ -117,20 +117,27 @@ class SkierLocationService : Service(), LocationListener {
 			return
 		}
 
-		Locations.updateLocations(location)
+		LiveLocationManager.updateLocations(location)
 
 		sendBroadcast(Intent(UPDATE_TRACKING_BROADCAST))
 
 		val intent = Intent(this, LiveMapActivity::class.java)
 
-		var mapMarker = Locations.getOnLocation()
+		var mapMarker = LiveLocationManager.checkIfInChairliftTerminal()
 		if (mapMarker != null) {
 			SkiingNotification.displaySkiingActivity(this, intent,
 				applicationInfo.icon, R.string.current_chairlift, mapMarker)
 			return
 		}
 
-		mapMarker = Locations.getInLocation()
+		mapMarker = LiveLocationManager.checkIfOnRun()
+		if (mapMarker != null) {
+			SkiingNotification.displaySkiingActivity(this, intent,
+				applicationInfo.icon, R.string.current_chairlift, mapMarker)
+			return
+		}
+
+		mapMarker = LiveLocationManager.getInLocation()
 		if (mapMarker != null) {
 			SkiingNotification.displaySkiingActivity(this, intent,
 				applicationInfo.icon, R.string.current_other, mapMarker)

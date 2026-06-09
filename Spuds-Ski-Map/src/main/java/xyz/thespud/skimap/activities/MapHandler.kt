@@ -33,17 +33,19 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import xyz.thespud.skimap.R
 import xyz.thespud.skimap.locationmanager.CustomIcons
-import xyz.thespud.skimap.locationmanager.Locations
+import xyz.thespud.skimap.locationmanager.LocationManager
 import xyz.thespud.skimap.mapItem.PolygonMapItem
 import xyz.thespud.skimap.mapItem.PolylineMapItem
 import xyz.thespud.skimap.locationmanager.SkiRuns
 
 abstract class MapHandler(private val activity: FragmentActivity, private val view: View,
                           private val cameraPosition: CameraPosition, private val cameraBounds: LatLngBounds?,
-                          private val skiRuns: SkiRuns, private val otherIconCallback: CustomIcons,
+                          private val skiRuns: SkiRuns, private val icons: CustomIcons,
                           private val drawOpaqueRuns: Boolean, private val showDebug: Boolean): OnMapReadyCallback {
 
 	internal var googleMap: GoogleMap? = null
+
+	abstract val locationManager: LocationManager<*>
 
 	var isNightOnly = false
 
@@ -51,23 +53,23 @@ abstract class MapHandler(private val activity: FragmentActivity, private val vi
 
 	open fun destroy() {
 
-		for (chairliftPolyline in Locations.chairliftPolylines) {
+		for (chairliftPolyline in locationManager.chairliftPolylines) {
 			chairliftPolyline.clearPolylines()
 		}
 
-		for (greenRunPolyline in Locations.greenRunPolylines) {
+		for (greenRunPolyline in locationManager.greenRunPolylines) {
 			greenRunPolyline.clearPolylines()
 		}
 
-		for (blueRunPolyline in Locations.blueRunPolylines) {
+		for (blueRunPolyline in locationManager.blueRunPolylines) {
 			blueRunPolyline.clearPolylines()
 		}
 
-		for (blackRunPolyline in Locations.blackRunPolylines) {
+		for (blackRunPolyline in locationManager.blackRunPolylines) {
 			blackRunPolyline.clearPolylines()
 		}
 
-		for (doubleBlackRunPolyline in Locations.doubleBlackRunPolylines) {
+		for (doubleBlackRunPolyline in locationManager.doubleBlackRunPolylines) {
 			doubleBlackRunPolyline.clearPolylines()
 		}
 
@@ -156,7 +158,10 @@ abstract class MapHandler(private val activity: FragmentActivity, private val vi
 				} else {
 					R.color.chairlift
 				}
-				Locations.chairliftPolylines = loadPolylines(liftsPolyline, chairliftColor, 4f, Locations.chairliftIcon)
+
+				val icon = icons.getChairliftIcon()
+				locationManager.chairliftPolylines = loadPolylines(liftsPolyline, chairliftColor,
+					4f, icon)
 				Log.d(tag, "Finished loading chairlift polyline")
 			})
 		}
@@ -170,7 +175,10 @@ abstract class MapHandler(private val activity: FragmentActivity, private val vi
 				} else {
 					R.color.green
 				}
-				Locations.greenRunPolylines = loadPolylines(greenPolylines, greenColor, 3f, Locations.greenIcon)
+
+				val icon = icons.getEasyIcon()
+				locationManager.greenRunPolylines = loadPolylines(greenPolylines, greenColor,
+					3f, icon)
 				Log.d(tag, "Finished loading green run polylines")
 			})
 		}
@@ -184,7 +192,10 @@ abstract class MapHandler(private val activity: FragmentActivity, private val vi
 				} else {
 					R.color.blue
 				}
-				Locations.blueRunPolylines = loadPolylines(bluePolylines, blueColor, 2f, Locations.blueIcon)
+
+				val icon = icons.getMoreDifficultIcon()
+				locationManager.blueRunPolylines = loadPolylines(bluePolylines, blueColor,
+					2f, icon)
 				Log.d(tag, "Finished loading blue run polylines")
 			})
 		}
@@ -198,7 +209,10 @@ abstract class MapHandler(private val activity: FragmentActivity, private val vi
 				} else {
 					R.color.black
 				}
-				Locations.blackRunPolylines = loadPolylines(blackPolylines, blackColor, 1f, Locations.blackIcon)
+
+				val icon = icons.getMostDifficultIcon()
+				locationManager.blackRunPolylines = loadPolylines(blackPolylines, blackColor,
+					1f, icon)
 				Log.d(tag, "Finished loading black run polylines")
 			})
 		}
@@ -212,8 +226,10 @@ abstract class MapHandler(private val activity: FragmentActivity, private val vi
 				} else {
 					R.color.black
 				}
-				Locations.doubleBlackRunPolylines = loadPolylines(doubleBlackPolylines, blackColor, 1f,
-					Locations.doubleBlackIcon)
+
+				val icon = icons.getExtremelyDifficultIcon()
+				locationManager.doubleBlackRunPolylines = loadPolylines(doubleBlackPolylines,
+					blackColor, 1f, icon)
 				Log.d(tag, "Finished loading double black run polylines")
 			})
 		}
@@ -222,8 +238,10 @@ abstract class MapHandler(private val activity: FragmentActivity, private val vi
 		if (startingLiftBounds != null) {
 			jobs.add(launch {
 				Log.d(tag, "Adding starting chairlift terminals")
-				Locations.startingChairliftTerminals = loadPolygons(startingLiftBounds, R.color.chairlift_polygon,
-					Locations.chairliftIcon)
+
+				val icon = icons.getChairliftIcon()
+				locationManager.startingChairliftTerminals = loadPolygons(startingLiftBounds,
+					R.color.chairlift_polygon, icon)
 				Log.d(tag, "Finished adding ending chairlift terminals")
 			})
 		}
@@ -232,8 +250,10 @@ abstract class MapHandler(private val activity: FragmentActivity, private val vi
 		if (endingLiftPolylines != null) {
 			jobs.add(launch {
 				Log.d(tag, "Adding ending chairlift terminals")
-				Locations.endingChairliftTerminals = loadPolygons(endingLiftPolylines, R.color.chairlift_polygon,
-					Locations.chairliftIcon)
+
+				val icon = icons.getChairliftIcon()
+				locationManager.endingChairliftTerminals = loadPolygons(endingLiftPolylines,
+					R.color.chairlift_polygon, icon)
 				Log.d(tag, "Finished adding ending chairlift terminals")
 			})
 		}
@@ -242,7 +262,10 @@ abstract class MapHandler(private val activity: FragmentActivity, private val vi
 		if (greenBounds != null) {
 			jobs.add(launch {
 				Log.d(tag, "Adding green bounds")
-				Locations.greenRunBounds = loadPolygons(greenBounds, R.color.green_polygon, Locations.greenIcon)
+
+				val icon = icons.getEasyIcon()
+				locationManager.greenRunBounds = loadPolygons(greenBounds, R.color.green_polygon,
+					icon)
 				Log.d(tag, "Finished adding green bounds")
 			})
 		}
@@ -251,7 +274,10 @@ abstract class MapHandler(private val activity: FragmentActivity, private val vi
 		if (blueBounds != null) {
 			jobs.add(launch {
 				Log.d(tag, "Adding blue bounds")
-				Locations.blueRunBounds = loadPolygons(blueBounds, R.color.blue_polygon, Locations.blueIcon)
+
+				val icon = icons.getMoreDifficultIcon()
+				locationManager.blueRunBounds = loadPolygons(blueBounds, R.color.blue_polygon,
+					icon)
 				Log.d(tag, "Finished adding blue bounds")
 			})
 		}
@@ -260,7 +286,10 @@ abstract class MapHandler(private val activity: FragmentActivity, private val vi
 		if (blackBounds != null) {
 			jobs.add(launch {
 				Log.d(tag, "Adding black bounds")
-				Locations.blackRunBounds = loadPolygons(blackBounds, R.color.black_polygon, Locations.blackIcon)
+
+				val icon = icons.getMostDifficultIcon()
+				locationManager.blackRunBounds = loadPolygons(blackBounds, R.color.black_polygon,
+					icon)
 				Log.d(tag, "Finished adding black bounds")
 			})
 		}
@@ -269,7 +298,10 @@ abstract class MapHandler(private val activity: FragmentActivity, private val vi
 		if (doubleBlackBounds != null) {
 			jobs.add(launch {
 				Log.d(tag, "Adding double black bounds")
-				Locations.doubleBlackRunBounds = loadPolygons(doubleBlackBounds, R.color.black_polygon, Locations.doubleBlackIcon)
+
+				val icon = icons.getExtremelyDifficultIcon()
+				locationManager.doubleBlackRunBounds = loadPolygons(doubleBlackBounds,
+					R.color.black_polygon, icon)
 				Log.d(tag, "Finished adding double black bounds")
 			})
 		}
@@ -283,17 +315,17 @@ abstract class MapHandler(private val activity: FragmentActivity, private val vi
 				R.drawable.ic_missing)
 			for (polygon in otherPolygons) {
 				if (polygon.name == "Ski Area Bounds") {
-					Locations.skiAreaBounds = polygon
+					locationManager.skiAreaBounds = polygon
 					continue
 				}
 
 				// Update the icon based on the name of the other location
-				val icon = otherIconCallback.getOtherIcon(polygon.name)
+				val icon = icons.getOtherIcon(polygon.name)
 				val sanitizedOther = PolygonMapItem(polygon.placemark, icon, polygon.points)
 				sanitizedOtherBounds.add(sanitizedOther)
 			}
 
-			Locations.otherBounds = sanitizedOtherBounds
+			locationManager.otherBounds = sanitizedOtherBounds
 			Log.d(tag, "Finished adding other bounds")
 		})
 

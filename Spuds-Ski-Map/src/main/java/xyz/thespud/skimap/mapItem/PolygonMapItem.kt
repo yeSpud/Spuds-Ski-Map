@@ -25,6 +25,18 @@ class PolygonMapItem(
 		return metadata
 	}
 
+	fun isLiftlineRun(chairliftName: String): Boolean {
+		val liftlines = metadata[LIFTLINE_RUN_KEY] as? List<String>? ?: return false
+
+		for (liftline in liftlines) {
+			if (liftline == chairliftName) {
+				return true
+			}
+		}
+
+		return false
+	}
+
 	companion object {
 		const val LIFTLINE_RUN_KEY = "liftline"
 	}
