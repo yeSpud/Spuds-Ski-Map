@@ -43,7 +43,7 @@ abstract class MapHandler(private val view: View, private val cameraPosition: Ca
 
 	internal var googleMap: GoogleMap? = null
 
-	abstract val locationManager: LocationManager<*>
+	abstract val locationManager: LocationManager<*>?
 
 	var isNightOnly = false
 
@@ -51,24 +51,28 @@ abstract class MapHandler(private val view: View, private val cameraPosition: Ca
 
 	open fun destroy() {
 
-		for (chairliftPolyline in locationManager.chairliftPolylines) {
-			chairliftPolyline.clearPolylines()
-		}
+		val _locationManager = locationManager
+		if (_locationManager != null) {
 
-		for (greenRunPolyline in locationManager.greenRunPolylines) {
-			greenRunPolyline.clearPolylines()
-		}
+			for (chairliftPolyline in _locationManager.chairliftPolylines) {
+				chairliftPolyline.clearPolylines()
+			}
 
-		for (blueRunPolyline in locationManager.blueRunPolylines) {
-			blueRunPolyline.clearPolylines()
-		}
+			for (greenRunPolyline in _locationManager.greenRunPolylines) {
+				greenRunPolyline.clearPolylines()
+			}
 
-		for (blackRunPolyline in locationManager.blackRunPolylines) {
-			blackRunPolyline.clearPolylines()
-		}
+			for (blueRunPolyline in _locationManager.blueRunPolylines) {
+				blueRunPolyline.clearPolylines()
+			}
 
-		for (doubleBlackRunPolyline in locationManager.doubleBlackRunPolylines) {
-			doubleBlackRunPolyline.clearPolylines()
+			for (blackRunPolyline in _locationManager.blackRunPolylines) {
+				blackRunPolyline.clearPolylines()
+			}
+
+			for (doubleBlackRunPolyline in _locationManager.doubleBlackRunPolylines) {
+				doubleBlackRunPolyline.clearPolylines()
+			}
 		}
 
 		// Clear the map if its not null.

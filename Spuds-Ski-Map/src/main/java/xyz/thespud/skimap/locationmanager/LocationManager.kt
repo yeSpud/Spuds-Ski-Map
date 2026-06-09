@@ -7,6 +7,7 @@ import androidx.annotation.AnyThread
 import androidx.annotation.ColorRes
 import androidx.annotation.DrawableRes
 import androidx.annotation.RawRes
+import androidx.annotation.UiThread
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.model.Dash
 import com.google.android.gms.maps.model.Gap
@@ -97,7 +98,7 @@ abstract class LocationManager<T>(skiRuns: SkiRuns, private val icons: CustomIco
 		}
 	}
 
-	@AnyThread
+	@UiThread
 	private fun loadPolylines(googleMap: GoogleMap, @RawRes fileRes: Int, context: Context,
 	                          @ColorRes color: Int, zIndex: Float, iconType: IconType): List<PolylineMapItem> {
 
@@ -145,7 +146,7 @@ abstract class LocationManager<T>(skiRuns: SkiRuns, private val icons: CustomIco
 		return hashMap.values.toList()
 	}
 
-	@AnyThread
+	@UiThread
 	protected fun loadPolygons(googleMap: GoogleMap, @RawRes fileRes: Int, context: Context,
 	                           @ColorRes color: Int, iconType: IconType, showDebug: Boolean = false):
 			List<PolygonMapItem> {
@@ -184,7 +185,7 @@ abstract class LocationManager<T>(skiRuns: SkiRuns, private val icons: CustomIco
 		val tag = "LocationManager"
 		Log.v(tag, "Started drawing polylines and polygons")
 
-		val liftsPolylineFile = skiRuns.liftsPolyline
+		val liftsPolylineFile = skiRuns.chairliftsPolyline
 		if (liftsPolylineFile != null) {
 			Log.d(tag, "Loading chairlift polyline")
 			val chairliftColor = if (drawOpaqueRuns) { R.color.chairlift_opaque } else { R.color.chairlift }
@@ -235,25 +236,15 @@ abstract class LocationManager<T>(skiRuns: SkiRuns, private val icons: CustomIco
 			Log.d(tag, "Finished loading double black run polylines")
 		} else { doubleBlackRunPolylines = emptyList() }
 
-		var terminals = mutableListOf<PolygonMapItem>()
-		val startingLiftBounds = skiRuns.startingLiftBounds
-		if (startingLiftBounds != null) {
+		// var terminals = mutableListOf<PolygonMapItem>()
+		val terminals = skiRuns.chairliftTerminals
+		if (terminals != null) {
 			Log.d(tag, "Adding starting chairlift terminals")
 
-			terminals.addAll(loadPolygons(googleMap,startingLiftBounds, context,
-				R.color.chairlift_polygon, IconType.CHAIRLIFT))
+			chairliftTerminals = loadPolygons(googleMap,terminals, context, R.color.chairlift_polygon,
+				IconType.CHAIRLIFT)
 			Log.d(tag, "Finished adding ending chairlift terminals")
-		}
-
-		val endingLiftPolylines = skiRuns.endingLiftPolylines
-		if (endingLiftPolylines != null) {
-			Log.d(tag, "Adding ending chairlift terminals")
-
-			terminals.addAll(loadPolygons(googleMap, endingLiftPolylines, context,
-				R.color.chairlift_polygon, IconType.CHAIRLIFT))
-			Log.d(tag, "Finished adding ending chairlift terminals")
-		}
-		chairliftTerminals = terminals
+		} else { chairliftTerminals = emptyList() }
 
 
 		val greenBounds = skiRuns.greenRunBounds

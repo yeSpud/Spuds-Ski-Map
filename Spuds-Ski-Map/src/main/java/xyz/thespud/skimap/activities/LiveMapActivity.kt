@@ -57,7 +57,7 @@ class LiveMapActivity(val activity: FragmentActivity, view: View, cameraPosition
 	override val additionalCallback: OnMapReadyCallback = OnMapReadyCallback { map ->
 		Log.v("additionalCallback", "additionalCallback called for LiveMapActivity")
 
-		activity.lifecycleScope.launch(Dispatchers.Default) {
+		activity.lifecycleScope.launch(Dispatchers.Main) {
 			locationManager = LiveLocationManager.getInstance(skiRuns, icons, map,
 				activity, false)
 		}
