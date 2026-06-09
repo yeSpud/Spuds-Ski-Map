@@ -1,9 +1,19 @@
 package xyz.thespud.skimap.locationmanager
 
+import android.content.Context
 import android.util.Log
+import com.google.android.gms.maps.GoogleMap
+import com.google.maps.android.data.kml.KmlPolygon
+import xyz.thespud.skimap.R
 import xyz.thespud.skimap.mapItem.PolygonMapItem
+import kotlin.jvm.Throws
 
-object LiveLocationManager: LocationManager<PolygonMapItem>() {
+class LiveLocationManager private constructor(skiRuns: SkiRuns, icons: CustomIcons, googleMap: GoogleMap,
+                                              context: Context, drawOpaqueRuns: Boolean):
+	LocationManager<PolygonMapItem>(skiRuns, icons, googleMap, context, drawOpaqueRuns) {
+
+	// Cannot be lateinit var because of a race-condition with location updates occurring before this has been set
+	val skiAreaBounds: PolygonMapItem
 
 	override fun checkIfInChairliftTerminal(): PolygonMapItem? {
 		val location = currentLocation
@@ -12,13 +22,7 @@ object LiveLocationManager: LocationManager<PolygonMapItem>() {
 			return null
 		}
 
-		var chairlift = locationInBounds(location, startingChairliftTerminals)
-		if (chairlift != null) {
-			isOnChairlift = chairlift
-			return chairlift
-		}
-
-		chairlift = locationInBounds(location, endingChairliftTerminals)
+		val chairlift = locationInBounds(location, chairliftTerminals)
 		if (chairlift != null) {
 			isOnChairlift = chairlift
 			return chairlift
@@ -82,5 +86,30 @@ object LiveLocationManager: LocationManager<PolygonMapItem>() {
 		}
 
 		return locationInBounds(location, otherBounds)
+	}
+
+	companion object {
+
+		@Volatile
+		private var instance: LiveLocationManager? = null
+
+		fun getInstance(skiRuns: SkiRuns, icons: CustomIcons, googleMap: GoogleMap, context: Context,
+		                drawOpaqueRuns: Boolean): LiveLocationManager {
+			return instance ?: synchronized(this) {
+				instance ?: LiveLocationManager(skiRuns, icons, googleMap, context, drawOpaqueRuns)
+					.also { instance = it }
+			}
+		}
+
+		@Throws(IllegalStateException::class)
+		fun getInstance(): LiveLocationManager {
+			return instance ?: throw IllegalStateException("LiveLocationManager not initialized")
+		}
+	}
+
+	init {
+		val placemark = parseKmlFile(googleMap, skiRuns.bounds, context).first()
+		val kmlPolygon = placemark.geometry as KmlPolygon
+		skiAreaBounds = PolygonMapItem(placemark, R.drawable.ic_missing, kmlPolygon.outerBoundaryCoordinates)
 	}
 }

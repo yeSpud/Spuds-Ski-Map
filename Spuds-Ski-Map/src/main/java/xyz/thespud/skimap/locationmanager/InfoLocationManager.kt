@@ -1,16 +1,17 @@
 package xyz.thespud.skimap.locationmanager
 
+import android.content.Context
 import android.graphics.Color
 import android.location.Location
 import android.util.Log
+import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
+import xyz.thespud.skimap.mapItem.InfoMapMarker
 import xyz.thespud.skimap.mapItem.PolygonMapItem
 
-data class InfoMapMarker(val mapItem: PolygonMapItem, val location: Location,
-                         val markerColor: BitmapDescriptor, val color: Int)
-
-class InfoLocationManager: LocationManager<InfoMapMarker>() {
+class InfoLocationManager(skiRuns: SkiRuns, icons: CustomIcons, googleMap: GoogleMap, context: Context):
+	LocationManager<InfoMapMarker>(skiRuns, icons, googleMap, context, true) {
 
 	fun resetLocations() {
 		currentLocation = null
@@ -32,14 +33,7 @@ class InfoLocationManager: LocationManager<InfoMapMarker>() {
 			return null
 		}
 
-		var chairlift = getRunMarker(startingChairliftTerminals, location,
-			RED_MARKER, Color.RED)
-		if (chairlift != null) {
-			isOnChairlift = chairlift.mapItem
-			return chairlift
-		}
-
-		chairlift = getRunMarker(endingChairliftTerminals, location,
+		val chairlift = getRunMarker(chairliftTerminals, location,
 			RED_MARKER, Color.RED)
 		if (chairlift != null) {
 			isOnChairlift = chairlift.mapItem

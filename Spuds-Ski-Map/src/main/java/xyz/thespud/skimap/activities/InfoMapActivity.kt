@@ -6,6 +6,7 @@ import android.view.View
 import android.widget.TextView
 import androidx.annotation.AnyThread
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.model.CameraPosition
@@ -19,21 +20,21 @@ import com.google.maps.android.ktx.addCircle
 import com.google.maps.android.ktx.addMarker
 import com.google.maps.android.ktx.addPolyline
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import xyz.thespud.skimap.R
 import xyz.thespud.skimap.locationmanager.CustomIcons
 import xyz.thespud.skimap.locationmanager.InfoLocationManager
-import xyz.thespud.skimap.locationmanager.InfoMapMarker
-import xyz.thespud.skimap.locationmanager.LocationManager
 import xyz.thespud.skimap.locationmanager.SkiRuns
+import xyz.thespud.skimap.mapItem.InfoMapMarker
 import kotlin.math.roundToInt
 
 class InfoMapActivity(val activity: AppCompatActivity, view: View, cameraPosition: CameraPosition,
-                      cameraBounds: LatLngBounds?, skiRuns: SkiRuns, otherIconCallback: CustomIcons,
-                      showDebug: Boolean = false): MapHandler(activity, view, cameraPosition,
-	cameraBounds, skiRuns, otherIconCallback, true, showDebug), GoogleMap.InfoWindowAdapter {
+                      cameraBounds: LatLngBounds?, skiRuns: SkiRuns, icons: CustomIcons,
+                      showDebug: Boolean = false): MapHandler(view, cameraPosition, cameraBounds,
+	showDebug), GoogleMap.InfoWindowAdapter {
 
-	override val locationManager = InfoLocationManager()
+	override lateinit var locationManager: InfoLocationManager
 
 	var circles: MutableList<Circle> = mutableListOf()
 
@@ -77,6 +78,10 @@ class InfoMapActivity(val activity: AppCompatActivity, view: View, cameraPositio
 			marker.showInfoWindow()
 
 			runMarker = marker
+		}
+
+		activity.lifecycleScope.launch(Dispatchers.Default) {
+			locationManager = InfoLocationManager(skiRuns, icons, map, activity)
 		}
 
 		map.setOnInfoWindowCloseListener { it.isVisible = false }
@@ -218,5 +223,4 @@ class InfoMapActivity(val activity: AppCompatActivity, view: View, cameraPositio
 		Log.v("InfoMapActivity", "getInfoWindow called")
 		return null
 	}
-
 }

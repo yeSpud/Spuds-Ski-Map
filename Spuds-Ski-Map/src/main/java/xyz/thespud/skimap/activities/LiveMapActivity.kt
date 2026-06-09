@@ -19,10 +19,13 @@ import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
+import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLngBounds
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import xyz.thespud.skimap.R
 import xyz.thespud.skimap.locationmanager.CustomIcons
 import xyz.thespud.skimap.locationmanager.LiveLocationManager
@@ -31,11 +34,11 @@ import xyz.thespud.skimap.services.SkierLocationService
 import xyz.thespud.skimap.services.SkiingNotification.NOTIFICATION_PERMISSION
 
 class LiveMapActivity(val activity: FragmentActivity, view: View, cameraPosition: CameraPosition,
-                      cameraBounds: LatLngBounds?, skiRuns: SkiRuns, otherIconCallback: CustomIcons,
-                      showDebug: Boolean = false): MapHandler(activity, view, cameraPosition, cameraBounds,
-	skiRuns, otherIconCallback, false, showDebug), GoogleMap.OnMyLocationClickListener {
+                      cameraBounds: LatLngBounds?, skiRuns: SkiRuns, icons: CustomIcons,
+                      showDebug: Boolean = false): MapHandler(view,
+	cameraPosition, cameraBounds, showDebug), GoogleMap.OnMyLocationClickListener {
 
-	override val locationManager = LiveLocationManager
+	override lateinit var locationManager: LiveLocationManager
 
 	var isMapSetup = false
 
@@ -51,8 +54,13 @@ class LiveMapActivity(val activity: FragmentActivity, view: View, cameraPosition
 		override fun onReceive(context: Context?, intent: Intent?) { setIsTracking(false) }
 	}
 
-	override val additionalCallback: OnMapReadyCallback = OnMapReadyCallback {
+	override val additionalCallback: OnMapReadyCallback = OnMapReadyCallback { map ->
 		Log.v("additionalCallback", "additionalCallback called for LiveMapActivity")
+
+		activity.lifecycleScope.launch(Dispatchers.Default) {
+			locationManager = LiveLocationManager.getInstance(skiRuns, icons, map,
+				activity, false)
+		}
 
 		// Determine if the user has enabled location permissions.
 		val locationEnabled = activity.checkPermission(Manifest.permission.ACCESS_FINE_LOCATION, Process.myPid(),
