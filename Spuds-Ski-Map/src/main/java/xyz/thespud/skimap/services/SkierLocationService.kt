@@ -18,11 +18,13 @@ import androidx.core.app.ActivityCompat
 import com.google.maps.android.PolyUtil
 import xyz.thespud.skimap.R
 import xyz.thespud.skimap.activities.LiveMapActivity
-import xyz.thespud.skimap.mapItem.Locations
+import xyz.thespud.skimap.locationmanager.LiveLocationManager
 
 class SkierLocationService : Service(), LocationListener {
 
 	private lateinit var locationManager: LocationManager
+
+	// var _liveLocation: LiveLocationManager? = null
 
 	override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
 		Log.v(TAG, "onStartCommand called!")
@@ -53,6 +55,8 @@ class SkierLocationService : Service(), LocationListener {
 				} else {
 					startForeground(SkiingNotification.TRACKING_SERVICE_ID, notification)
 				}
+
+				// _liveLocation = LiveLocationManager.getInstance()
 
 				sendBroadcast(Intent(START_TRACKING_BROADCAST))
 			}
@@ -100,15 +104,20 @@ class SkierLocationService : Service(), LocationListener {
 	override fun onLocationChanged(location: Location) {
 		Log.v(TAG, "Location updated")
 
-		val bounds = Locations.skiAreaBounds
-		if (bounds == null) {
-			Log.w(TAG, "Bounds not set before update")
+		val liveLocation = try {
+			LiveLocationManager.getInstance() //_liveLocation
+		} catch (e: IllegalStateException) {
+			Log.w(TAG, "Live location tracking not yet ready", e)
 			return
 		}
+		/*if (liveLocation == null) {
+			Log.w(TAG, "Live location tracking not yet ready")
+			return
+		}*/
 
 		// If we are not on the mountain stop the tracking.
 		if (!PolyUtil.containsLocation(location.latitude, location.longitude,
-				bounds.points, true)) {
+				liveLocation.skiAreaBounds.points, true)) {
 			Toast.makeText(this, R.string.out_of_bounds,
 				Toast.LENGTH_LONG).show()
 			SkiingNotification.cancelTrackingNotification(this)
@@ -117,20 +126,27 @@ class SkierLocationService : Service(), LocationListener {
 			return
 		}
 
-		Locations.updateLocations(location)
+		liveLocation.updateLocations(location)
 
 		sendBroadcast(Intent(UPDATE_TRACKING_BROADCAST))
 
 		val intent = Intent(this, LiveMapActivity::class.java)
 
-		var mapMarker = Locations.getOnLocation()
+		var mapMarker = liveLocation.checkIfInChairliftTerminal()
 		if (mapMarker != null) {
 			SkiingNotification.displaySkiingActivity(this, intent,
 				applicationInfo.icon, R.string.current_chairlift, mapMarker)
 			return
 		}
 
-		mapMarker = Locations.getInLocation()
+		mapMarker = liveLocation.checkIfOnRun()
+		if (mapMarker != null) {
+			SkiingNotification.displaySkiingActivity(this, intent,
+				applicationInfo.icon, R.string.current_chairlift, mapMarker)
+			return
+		}
+
+		mapMarker = liveLocation.getInLocation()
 		if (mapMarker != null) {
 			SkiingNotification.displaySkiingActivity(this, intent,
 				applicationInfo.icon, R.string.current_other, mapMarker)

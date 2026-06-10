@@ -32,17 +32,18 @@ import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import xyz.thespud.skimap.R
-import xyz.thespud.skimap.mapItem.Locations
+import xyz.thespud.skimap.locationmanager.CustomIcons
+import xyz.thespud.skimap.locationmanager.LocationManager
 import xyz.thespud.skimap.mapItem.PolygonMapItem
 import xyz.thespud.skimap.mapItem.PolylineMapItem
-import xyz.thespud.skimap.mapItem.SkiRuns
+import xyz.thespud.skimap.locationmanager.SkiRuns
 
-abstract class MapHandler(private val activity: FragmentActivity, private val view: View,
-                          private val cameraPosition: CameraPosition, private val cameraBounds: LatLngBounds?,
-                          private val skiRuns: SkiRuns, private val otherIconCallback: CustomIcons,
-                          private val drawOpaqueRuns: Boolean, private val showDebug: Boolean): OnMapReadyCallback {
+abstract class MapHandler(private val view: View, private val cameraPosition: CameraPosition,
+                          private val cameraBounds: LatLngBounds?, private val showDebug: Boolean): OnMapReadyCallback {
 
 	internal var googleMap: GoogleMap? = null
+
+	abstract val locationManager: LocationManager<*>?
 
 	var isNightOnly = false
 
@@ -50,24 +51,28 @@ abstract class MapHandler(private val activity: FragmentActivity, private val vi
 
 	open fun destroy() {
 
-		for (chairliftPolyline in Locations.chairliftPolylines) {
-			chairliftPolyline.clearPolylines()
-		}
+		val _locationManager = locationManager
+		if (_locationManager != null) {
 
-		for (greenRunPolyline in Locations.greenRunPolylines) {
-			greenRunPolyline.clearPolylines()
-		}
+			for (chairliftPolyline in _locationManager.chairliftPolylines) {
+				chairliftPolyline.clearPolylines()
+			}
 
-		for (blueRunPolyline in Locations.blueRunPolylines) {
-			blueRunPolyline.clearPolylines()
-		}
+			for (greenRunPolyline in _locationManager.greenRunPolylines) {
+				greenRunPolyline.clearPolylines()
+			}
 
-		for (blackRunPolyline in Locations.blackRunPolylines) {
-			blackRunPolyline.clearPolylines()
-		}
+			for (blueRunPolyline in _locationManager.blueRunPolylines) {
+				blueRunPolyline.clearPolylines()
+			}
 
-		for (doubleBlackRunPolyline in Locations.doubleBlackRunPolylines) {
-			doubleBlackRunPolyline.clearPolylines()
+			for (blackRunPolyline in _locationManager.blackRunPolylines) {
+				blackRunPolyline.clearPolylines()
+			}
+
+			for (doubleBlackRunPolyline in _locationManager.doubleBlackRunPolylines) {
+				doubleBlackRunPolyline.clearPolylines()
+			}
 		}
 
 		// Clear the map if its not null.
@@ -114,7 +119,7 @@ abstract class MapHandler(private val activity: FragmentActivity, private val vi
 		map.mapType = GoogleMap.MAP_TYPE_SATELLITE
 
 		// Load the various polylines and polygons onto the map.
-		activity.lifecycleScope.launch(Dispatchers.Default) { loadSkiRuns() }
+		// activity.lifecycleScope.launch(Dispatchers.Default) { loadSkiRuns() }
 
 		applyMapInsets(view, map)
 
@@ -140,262 +145,6 @@ abstract class MapHandler(private val activity: FragmentActivity, private val vi
 		// and we want our newly set listener to run
 		view.requestApplyInsets()
 	}
-
-	private suspend fun loadSkiRuns() = coroutineScope {
-		val tag = "drawPolylines"
-		val jobs = mutableListOf<Job>()
-		Log.v(tag, "Started drawing polylines and polygons")
-
-		val liftsPolyline = skiRuns.liftsPolyline
-		if (liftsPolyline != null) {
-			jobs.add(launch {
-				Log.d(tag, "Loading chairlift polyline")
-				val chairliftColor = if (drawOpaqueRuns) {
-					R.color.chairlift_opaque
-				} else {
-					R.color.chairlift
-				}
-				Locations.chairliftPolylines = loadPolylines(liftsPolyline, chairliftColor, 4f, Locations.chairliftIcon)
-				Log.d(tag, "Finished loading chairlift polyline")
-			})
-		}
-
-		val greenPolylines = skiRuns.greenRunPolylines
-		if (greenPolylines != null) {
-			jobs.add(launch {
-				Log.d(tag, "Loading green run polylines")
-				val greenColor = if (drawOpaqueRuns) {
-					R.color.green_opaque
-				} else {
-					R.color.green
-				}
-				Locations.greenRunPolylines = loadPolylines(greenPolylines, greenColor, 3f, Locations.greenIcon)
-				Log.d(tag, "Finished loading green run polylines")
-			})
-		}
-
-		val bluePolylines = skiRuns.blueRunPolylines
-		if (bluePolylines != null) {
-			jobs.add(launch {
-				Log.d(tag, "Loading blue run polylines")
-				val blueColor = if (drawOpaqueRuns) {
-					R.color.blue_opaque
-				} else {
-					R.color.blue
-				}
-				Locations.blueRunPolylines = loadPolylines(bluePolylines, blueColor, 2f, Locations.blueIcon)
-				Log.d(tag, "Finished loading blue run polylines")
-			})
-		}
-
-		val blackPolylines = skiRuns.blackRunPolylines
-		if (blackPolylines != null) {
-			jobs.add(launch {
-				Log.d(tag, "Loading black run polylines")
-				val blackColor = if (drawOpaqueRuns) {
-					R.color.black_opaque
-				} else {
-					R.color.black
-				}
-				Locations.blackRunPolylines = loadPolylines(blackPolylines, blackColor, 1f, Locations.blackIcon)
-				Log.d(tag, "Finished loading black run polylines")
-			})
-		}
-
-		val doubleBlackPolylines = skiRuns.doubleBlackRunPolylines
-		if (doubleBlackPolylines != null) {
-			jobs.add(launch {
-				Log.d(tag, "Loading double black run polylines")
-				val blackColor = if (drawOpaqueRuns) {
-					R.color.black_opaque
-				} else {
-					R.color.black
-				}
-				Locations.doubleBlackRunPolylines = loadPolylines(doubleBlackPolylines, blackColor, 1f,
-					Locations.doubleBlackIcon)
-				Log.d(tag, "Finished loading double black run polylines")
-			})
-		}
-
-		val startingLiftBounds = skiRuns.startingLiftBounds
-		if (startingLiftBounds != null) {
-			jobs.add(launch {
-				Log.d(tag, "Adding starting chairlift terminals")
-				Locations.startingChairliftTerminals = loadPolygons(startingLiftBounds, R.color.chairlift_polygon,
-					Locations.chairliftIcon)
-				Log.d(tag, "Finished adding ending chairlift terminals")
-			})
-		}
-
-		val endingLiftPolylines = skiRuns.endingLiftPolylines
-		if (endingLiftPolylines != null) {
-			jobs.add(launch {
-				Log.d(tag, "Adding ending chairlift terminals")
-				Locations.endingChairliftTerminals = loadPolygons(endingLiftPolylines, R.color.chairlift_polygon,
-					Locations.chairliftIcon)
-				Log.d(tag, "Finished adding ending chairlift terminals")
-			})
-		}
-
-		val greenBounds = skiRuns.greenRunBounds
-		if (greenBounds != null) {
-			jobs.add(launch {
-				Log.d(tag, "Adding green bounds")
-				Locations.greenRunBounds = loadPolygons(greenBounds, R.color.green_polygon, Locations.greenIcon)
-				Log.d(tag, "Finished adding green bounds")
-			})
-		}
-
-		val blueBounds = skiRuns.blueRunBounds
-		if (blueBounds != null) {
-			jobs.add(launch {
-				Log.d(tag, "Adding blue bounds")
-				Locations.blueRunBounds = loadPolygons(blueBounds, R.color.blue_polygon, Locations.blueIcon)
-				Log.d(tag, "Finished adding blue bounds")
-			})
-		}
-
-		val blackBounds = skiRuns.blackRunBounds
-		if (blackBounds != null) {
-			jobs.add(launch {
-				Log.d(tag, "Adding black bounds")
-				Locations.blackRunBounds = loadPolygons(blackBounds, R.color.black_polygon, Locations.blackIcon)
-				Log.d(tag, "Finished adding black bounds")
-			})
-		}
-
-		val doubleBlackBounds = skiRuns.doubleBlackRunBounds
-		if (doubleBlackBounds != null) {
-			jobs.add(launch {
-				Log.d(tag, "Adding double black bounds")
-				Locations.doubleBlackRunBounds = loadPolygons(doubleBlackBounds, R.color.black_polygon, Locations.doubleBlackIcon)
-				Log.d(tag, "Finished adding double black bounds")
-			})
-		}
-
-		// Other bounds are REQUIRED because it contains the ski area bounds
-		jobs.add(launch {
-			Log.d(tag, "Adding other bounds")
-			val sanitizedOtherBounds = mutableListOf<PolygonMapItem>()
-
-			val otherPolygons = loadPolygons(skiRuns.other, R.color.other_polygon_fill,
-				R.drawable.ic_missing)
-			for (polygon in otherPolygons) {
-				if (polygon.name == "Ski Area Bounds") {
-					Locations.skiAreaBounds = polygon
-					continue
-				}
-
-				// Update the icon based on the name of the other location
-				val icon = otherIconCallback.getOtherIcon(polygon.name)
-				val sanitizedOther = PolygonMapItem(polygon.placemark, icon, polygon.points)
-				sanitizedOtherBounds.add(sanitizedOther)
-			}
-
-			Locations.otherBounds = sanitizedOtherBounds
-			Log.d(tag, "Finished adding other bounds")
-		})
-
-		jobs.joinAll()
-		System.gc()
-		Log.v(tag, "Finished drawing polylines and polygons")
-	}
-
-	private fun parseKmlFile(@RawRes file: Int): Iterable<KmlPlacemark> {
-		if (googleMap == null) {
-			return emptyList()
-		}
-
-		val kml = kmlLayer(googleMap!!, file, activity)
-		if (kml.placemarks.spliterator().estimateSize() == 0L) {
-			Log.w("parseKmlFile", "No placemarks in kml file!")
-		}
-		return kml.placemarks
-	}
-
-	@AnyThread
-	private suspend fun loadPolylines(@RawRes fileRes: Int, @ColorRes color: Int, zIndex: Float,
-	                                  @DrawableRes icon: Int): List<PolylineMapItem> =
-		withContext(Dispatchers.Default) {
-
-			val hashMap: HashMap<String, PolylineMapItem> = HashMap()
-
-			// Load the polyline from the file, and iterate though each placemark.
-			for (placemark in parseKmlFile(fileRes)) {
-
-				// Get the LatLng coordinates of the placemark.
-				val lineString: KmlLineString = placemark.geometry as KmlLineString
-				val coordinates: ArrayList<LatLng> = lineString.geometryObject
-
-				// Get the color of the polyline.
-				val argb = activity.getColor(color)
-
-				val polylineMapItem = PolylineMapItem(placemark, icon)
-
-				// Create the polyline using the coordinates and other options.
-				val polyline = withContext(Dispatchers.Main) {
-					googleMap?.addPolyline {
-						addAll(coordinates)
-						color(argb)
-						if (polylineMapItem.metadata[PolylineMapItem.EASIEST_WAY_DOWN_KEY] != null) {
-							pattern(listOf(Gap(2.0F), Dash(8.0F)))
-						}
-						geodesic(true)
-						startCap(RoundCap())
-						endCap(RoundCap())
-						clickable(false)
-						width(8.0F)
-						zIndex(zIndex)
-						visible(true)
-					}
-				}
-
-				// Add to the hashmap if the polyline isn't included
-				if (hashMap[polylineMapItem.name] == null) {
-					hashMap[polylineMapItem.name] = polylineMapItem
-				}
-
-				if (polyline != null) {
-					hashMap[polylineMapItem.name]!!.polylines.add(polyline)
-				}
-			}
-
-			return@withContext hashMap.values.toList()
-		}
-
-	@AnyThread
-	private suspend fun loadPolygons(@RawRes fileRes: Int, @ColorRes color: Int,
-	                                 @DrawableRes drawableRes: Int): List<PolygonMapItem> =
-		withContext(Dispatchers.Default) {
-			val polygonMapItems = mutableListOf<PolygonMapItem>()
-
-			// Load the polygons file.
-			for (placemark in parseKmlFile(fileRes)) {
-
-				val kmlPolygon: KmlPolygon = placemark.geometry as KmlPolygon
-
-				activity
-				val argb = activity.getColor(color)
-
-				withContext(Dispatchers.Main) {
-					googleMap?.addPolygon {
-						addAll(kmlPolygon.outerBoundaryCoordinates)
-						clickable(false)
-						geodesic(true)
-						zIndex(0.5F)
-						fillColor(argb)
-						strokeColor(argb)
-						strokeWidth(8.0F)
-						visible(showDebug)
-					}
-				}
-
-				val polygonMapItem = PolygonMapItem(placemark, drawableRes, kmlPolygon.outerBoundaryCoordinates)
-				polygonMapItems.add(polygonMapItem)
-			}
-
-			return@withContext polygonMapItems
-		}
 
 	companion object {
 		private const val MINIMUM_ZOOM = 13.0F

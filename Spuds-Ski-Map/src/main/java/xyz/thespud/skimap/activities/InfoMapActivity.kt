@@ -1,13 +1,12 @@
 package xyz.thespud.skimap.activities
 
 import android.annotation.SuppressLint
-import android.app.Activity
 import android.util.Log
 import android.view.View
 import android.widget.TextView
 import androidx.annotation.AnyThread
 import androidx.appcompat.app.AppCompatActivity
-import androidx.fragment.app.FragmentActivity
+import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.model.CameraPosition
@@ -21,16 +20,22 @@ import com.google.maps.android.ktx.addCircle
 import com.google.maps.android.ktx.addMarker
 import com.google.maps.android.ktx.addPolyline
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import xyz.thespud.skimap.R
-import xyz.thespud.skimap.mapItem.MapMarker
-import xyz.thespud.skimap.mapItem.SkiRuns
+import xyz.thespud.skimap.locationmanager.CustomIcons
+import xyz.thespud.skimap.locationmanager.InfoLocationManager
+import xyz.thespud.skimap.locationmanager.LocationManager
+import xyz.thespud.skimap.locationmanager.SkiRuns
+import xyz.thespud.skimap.mapItem.InfoMapMarker
 import kotlin.math.roundToInt
 
 class InfoMapActivity(val activity: AppCompatActivity, view: View, cameraPosition: CameraPosition,
-                      cameraBounds: LatLngBounds?, skiRuns: SkiRuns, otherIconCallback: CustomIcons,
-                      showDebug: Boolean = false): MapHandler(activity, view, cameraPosition,
-	cameraBounds, skiRuns, otherIconCallback, true, showDebug), GoogleMap.InfoWindowAdapter {
+                      cameraBounds: LatLngBounds?, skiRuns: SkiRuns, icons: CustomIcons,
+                      showDebug: Boolean = false): MapHandler(view, cameraPosition, cameraBounds,
+	showDebug), GoogleMap.InfoWindowAdapter {
+
+	override var locationManager: InfoLocationManager? = null
 
 	var circles: MutableList<Circle> = mutableListOf()
 
@@ -40,7 +45,7 @@ class InfoMapActivity(val activity: AppCompatActivity, view: View, cameraPositio
 
 	var showDots = false
 
-	var loadedMapMarkers: Array<MapMarker> = emptyArray()
+	var loadedMapMarkers: Array<InfoMapMarker> = emptyArray()
 
 	@SuppressLint("PotentialBehaviorOverride")
 	override val additionalCallback: OnMapReadyCallback = OnMapReadyCallback { map ->
@@ -50,7 +55,7 @@ class InfoMapActivity(val activity: AppCompatActivity, view: View, cameraPositio
 			Log.v("onCircleClicked", "Circle clicked!")
 			map.setInfoWindowAdapter(this)
 
-			val mapMarker = it.tag as MapMarker
+			val mapMarker = it.tag as InfoMapMarker
 			val location = LatLng(mapMarker.location.latitude, mapMarker.location.longitude)
 
 			var marker = runMarker
@@ -58,14 +63,14 @@ class InfoMapActivity(val activity: AppCompatActivity, view: View, cameraPositio
 				marker = map.addMarker {
 					position(location)
 					icon(mapMarker.markerColor)
-					title(mapMarker.name)
+					title(mapMarker.mapItem.name)
 					zIndex(99.0F)
 					visible(true)
 				}
 			} else {
 				marker.position = location
 				marker.setIcon(mapMarker.markerColor)
-				marker.title = mapMarker.name
+				marker.title = mapMarker.mapItem.name
 				marker.isVisible = true
 			}
 
@@ -74,6 +79,10 @@ class InfoMapActivity(val activity: AppCompatActivity, view: View, cameraPositio
 			marker.showInfoWindow()
 
 			runMarker = marker
+		}
+
+		activity.lifecycleScope.launch(Dispatchers.Main) {
+			locationManager = InfoLocationManager(skiRuns, icons, map, activity)
 		}
 
 		map.setOnInfoWindowCloseListener { it.isVisible = false }
@@ -87,7 +96,7 @@ class InfoMapActivity(val activity: AppCompatActivity, view: View, cameraPositio
 	@AnyThread
 	suspend fun addPolylinesToMap() = withContext(Dispatchers.Default) {
 		Log.d("addPolylinesToMap", "Started adding polylines to map")
-		var previousMapMarker: MapMarker? = null
+		var previousMapMarker: InfoMapMarker? = null
 		val polylinePoints: MutableList<LatLng> = mutableListOf()
 
 		for (mapMarker in loadedMapMarkers) {
@@ -176,15 +185,15 @@ class InfoMapActivity(val activity: AppCompatActivity, view: View, cameraPositio
 	override fun getInfoContents(marker: Marker): View? {
 		Log.v("CustomInfoWindow", "getInfoContents called")
 
-		if (marker.tag !is MapMarker) {
+		if (marker.tag !is InfoMapMarker) {
 			return null
 		}
 
 		val markerView: View = activity.layoutInflater.inflate(R.layout.info_window, null)
 		val name: TextView = markerView.findViewById(R.id.marker_name)
 
-		val markerInfo: MapMarker = marker.tag as MapMarker
-		name.text = markerInfo.name
+		val markerInfo = marker.tag as InfoMapMarker
+		name.text = markerInfo.mapItem.name
 
 		val altitude: TextView = markerView.findViewById(R.id.marker_altitude)
 
@@ -215,5 +224,4 @@ class InfoMapActivity(val activity: AppCompatActivity, view: View, cameraPositio
 		Log.v("InfoMapActivity", "getInfoWindow called")
 		return null
 	}
-
 }
