@@ -10,8 +10,8 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import xyz.thespud.skimap.mapItem.InfoMapMarker
 import xyz.thespud.skimap.mapItem.PolygonMapItem
 
-class InfoLocationManager(skiRuns: SkiRuns, icons: CustomIcons, googleMap: GoogleMap, context: Context):
-	LocationManager<InfoMapMarker>(skiRuns, icons, googleMap, context, true) {
+class InfoLocationManager(skiAreaObjects: SkiAreaObjects, icons: CustomIcons, googleMap: GoogleMap, context: Context):
+	LocationManager<InfoMapMarker>(skiAreaObjects, icons, googleMap, context, true) {
 
 	fun resetLocations() {
 		currentLocation = null

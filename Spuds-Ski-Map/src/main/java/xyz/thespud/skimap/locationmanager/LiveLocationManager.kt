@@ -8,9 +8,9 @@ import xyz.thespud.skimap.R
 import xyz.thespud.skimap.mapItem.PolygonMapItem
 import kotlin.jvm.Throws
 
-class LiveLocationManager private constructor(skiRuns: SkiRuns, icons: CustomIcons, googleMap: GoogleMap,
+class LiveLocationManager private constructor(skiAreaObjects: SkiAreaObjects, icons: CustomIcons, googleMap: GoogleMap,
                                               context: Context, drawOpaqueRuns: Boolean):
-	LocationManager<PolygonMapItem>(skiRuns, icons, googleMap, context, drawOpaqueRuns) {
+	LocationManager<PolygonMapItem>(skiAreaObjects, icons, googleMap, context, drawOpaqueRuns) {
 
 	// Cannot be lateinit var because of a race-condition with location updates occurring before this has been set
 	val skiAreaBounds: PolygonMapItem
@@ -93,10 +93,10 @@ class LiveLocationManager private constructor(skiRuns: SkiRuns, icons: CustomIco
 		@Volatile
 		private var instance: LiveLocationManager? = null
 
-		fun getInstance(skiRuns: SkiRuns, icons: CustomIcons, googleMap: GoogleMap, context: Context,
+		fun getInstance(skiAreaObjects: SkiAreaObjects, icons: CustomIcons, googleMap: GoogleMap, context: Context,
 		                drawOpaqueRuns: Boolean): LiveLocationManager {
 			return instance ?: synchronized(this) {
-				instance ?: LiveLocationManager(skiRuns, icons, googleMap, context, drawOpaqueRuns)
+				instance ?: LiveLocationManager(skiAreaObjects, icons, googleMap, context, drawOpaqueRuns)
 					.also { instance = it }
 			}
 		}
@@ -108,7 +108,7 @@ class LiveLocationManager private constructor(skiRuns: SkiRuns, icons: CustomIco
 	}
 
 	init {
-		val placemark = parseKmlFile(googleMap, skiRuns.bounds, context).first()
+		val placemark = parseKmlFile(googleMap, skiAreaObjects.skiAreaBounds, context).first()
 		val kmlPolygon = placemark.geometry as KmlPolygon
 		skiAreaBounds = PolygonMapItem(placemark, R.drawable.ic_missing, kmlPolygon.outerBoundaryCoordinates)
 	}
