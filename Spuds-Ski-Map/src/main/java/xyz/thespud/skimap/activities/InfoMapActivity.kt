@@ -25,13 +25,12 @@ import kotlinx.coroutines.withContext
 import xyz.thespud.skimap.R
 import xyz.thespud.skimap.locationmanager.CustomIcons
 import xyz.thespud.skimap.locationmanager.InfoLocationManager
-import xyz.thespud.skimap.locationmanager.LocationManager
-import xyz.thespud.skimap.locationmanager.SkiRuns
+import xyz.thespud.skimap.locationmanager.SkiAreaObjects
 import xyz.thespud.skimap.mapItem.InfoMapMarker
 import kotlin.math.roundToInt
 
 class InfoMapActivity(val activity: AppCompatActivity, view: View, cameraPosition: CameraPosition,
-                      cameraBounds: LatLngBounds?, skiRuns: SkiRuns, icons: CustomIcons,
+                      cameraBounds: LatLngBounds?, skiAreaObjects: SkiAreaObjects, icons: CustomIcons,
                       showDebug: Boolean = false): MapHandler(view, cameraPosition, cameraBounds,
 	showDebug), GoogleMap.InfoWindowAdapter {
 
@@ -82,7 +81,7 @@ class InfoMapActivity(val activity: AppCompatActivity, view: View, cameraPositio
 		}
 
 		activity.lifecycleScope.launch(Dispatchers.Main) {
-			locationManager = InfoLocationManager(skiRuns, icons, map, activity)
+			locationManager = InfoLocationManager(skiAreaObjects, icons, map, activity)
 		}
 
 		map.setOnInfoWindowCloseListener { it.isVisible = false }

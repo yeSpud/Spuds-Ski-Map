@@ -29,12 +29,12 @@ import kotlinx.coroutines.launch
 import xyz.thespud.skimap.R
 import xyz.thespud.skimap.locationmanager.CustomIcons
 import xyz.thespud.skimap.locationmanager.LiveLocationManager
-import xyz.thespud.skimap.locationmanager.SkiRuns
+import xyz.thespud.skimap.locationmanager.SkiAreaObjects
 import xyz.thespud.skimap.services.SkierLocationService
 import xyz.thespud.skimap.services.SkiingNotification.NOTIFICATION_PERMISSION
 
 class LiveMapActivity(val activity: FragmentActivity, view: View, cameraPosition: CameraPosition,
-                      cameraBounds: LatLngBounds?, skiRuns: SkiRuns, icons: CustomIcons,
+                      cameraBounds: LatLngBounds?, skiAreaObjects: SkiAreaObjects, icons: CustomIcons,
                       showDebug: Boolean = false): MapHandler(view,
 	cameraPosition, cameraBounds, showDebug), GoogleMap.OnMyLocationClickListener {
 
@@ -58,7 +58,7 @@ class LiveMapActivity(val activity: FragmentActivity, view: View, cameraPosition
 		Log.v("additionalCallback", "additionalCallback called for LiveMapActivity")
 
 		activity.lifecycleScope.launch(Dispatchers.Main) {
-			locationManager = LiveLocationManager.getInstance(skiRuns, icons, map,
+			locationManager = LiveLocationManager.getInstance(skiAreaObjects, icons, map,
 				activity, false)
 		}
 
@@ -93,30 +93,12 @@ class LiveMapActivity(val activity: FragmentActivity, view: View, cameraPosition
 
 	// fixme callback not being called when location dot is clicked
 	override fun onMyLocationClick(location: Location) {
-		locationManager.updateLocations(location)
-
-		var toast = Toast.makeText(activity, R.string.your_location, Toast.LENGTH_LONG)
-
-		var mapMarker = locationManager.checkIfInChairliftTerminal()
-		if (mapMarker != null) {
-			toast = Toast.makeText(activity, activity.getString(R.string.current_chairlift, mapMarker.name),
-				Toast.LENGTH_LONG)
-			toast.show()
-			return
-		}
-
-		mapMarker = locationManager.checkIfOnRun()
-		if (mapMarker != null) {
-			toast = Toast.makeText(activity, activity.getString(R.string.current_chairlift, mapMarker.name),
-				Toast.LENGTH_LONG)
-			toast.show()
-			return
-		}
-
-		mapMarker = locationManager.getInLocation()
-		if (mapMarker != null) {
-			toast = Toast.makeText(activity, activity.getString(R.string.current_other, mapMarker.name),
-				Toast.LENGTH_LONG)
+		val mapMarker = locationManager.getMapMarker(location)
+		val toast = if (mapMarker == null) {
+			Toast.makeText(activity, R.string.your_location, Toast.LENGTH_LONG)
+		} else {
+			Toast.makeText(activity, activity.getString(R.string.current_location,
+				mapMarker.name), Toast.LENGTH_LONG)
 		}
 
 		toast.show()

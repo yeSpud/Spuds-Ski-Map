@@ -1,6 +1,7 @@
 package xyz.thespud.skimap.locationmanager
 
 import android.content.Context
+import android.location.Location
 import android.util.Log
 import com.google.android.gms.maps.GoogleMap
 import com.google.maps.android.data.kml.KmlPolygon
@@ -8,9 +9,9 @@ import xyz.thespud.skimap.R
 import xyz.thespud.skimap.mapItem.PolygonMapItem
 import kotlin.jvm.Throws
 
-class LiveLocationManager private constructor(skiRuns: SkiRuns, icons: CustomIcons, googleMap: GoogleMap,
+class LiveLocationManager private constructor(skiAreaObjects: SkiAreaObjects, icons: CustomIcons, googleMap: GoogleMap,
                                               context: Context, drawOpaqueRuns: Boolean):
-	LocationManager<PolygonMapItem>(skiRuns, icons, googleMap, context, drawOpaqueRuns) {
+	LocationManager<PolygonMapItem>(skiAreaObjects, icons, googleMap, context, drawOpaqueRuns) {
 
 	// Cannot be lateinit var because of a race-condition with location updates occurring before this has been set
 	val skiAreaBounds: PolygonMapItem
@@ -56,23 +57,23 @@ class LiveLocationManager private constructor(skiRuns: SkiRuns, icons: CustomIco
 		}
 
 		var run = locationInBounds(location, greenRunBounds)
-		if (run != null) {
-			return checkIfLiftlineRun(run)
-		}
+		if (run != null) { return checkIfLiftlineRun(run) }
 
 		run = locationInBounds(location, blueRunBounds)
-		if (run != null) {
-			return checkIfLiftlineRun(run)
-		}
+		if (run != null) { return checkIfLiftlineRun(run) }
 
 		run = locationInBounds(location, blackRunBounds)
-		if (run != null) {
-			return checkIfLiftlineRun(run)
-		}
+		if (run != null) { return checkIfLiftlineRun(run) }
 
 		run = locationInBounds(location, doubleBlackRunBounds)
+		if (run != null) { return checkIfLiftlineRun(run) }
+
+		// Since were not in a chairlift terminal, and not on a ski run,
+		// just check to see if were only on the chairlift polygon
+		run = locationInBounds(location, chairliftBounds)
 		if (run != null) {
-			return checkIfLiftlineRun(run)
+			isOnChairlift = run
+			return run
 		}
 
 		return null
@@ -88,15 +89,31 @@ class LiveLocationManager private constructor(skiRuns: SkiRuns, icons: CustomIco
 		return locationInBounds(location, otherBounds)
 	}
 
+	override fun getMapMarker(location: Location): PolygonMapItem? {
+		updateLocations(location)
+
+		var mapMarker = checkIfInChairliftTerminal()
+		if (mapMarker != null) { return mapMarker }
+
+		mapMarker = checkIfOnRun()
+		if (mapMarker != null) { return mapMarker }
+
+		mapMarker = getInLocation()
+		if (mapMarker != null) { return mapMarker }
+
+		Log.i("getMapMarker", "Unable to determine live location")
+		return null
+	}
+
 	companion object {
 
 		@Volatile
 		private var instance: LiveLocationManager? = null
 
-		fun getInstance(skiRuns: SkiRuns, icons: CustomIcons, googleMap: GoogleMap, context: Context,
+		fun getInstance(skiAreaObjects: SkiAreaObjects, icons: CustomIcons, googleMap: GoogleMap, context: Context,
 		                drawOpaqueRuns: Boolean): LiveLocationManager {
 			return instance ?: synchronized(this) {
-				instance ?: LiveLocationManager(skiRuns, icons, googleMap, context, drawOpaqueRuns)
+				instance ?: LiveLocationManager(skiAreaObjects, icons, googleMap, context, drawOpaqueRuns)
 					.also { instance = it }
 			}
 		}
@@ -108,7 +125,7 @@ class LiveLocationManager private constructor(skiRuns: SkiRuns, icons: CustomIco
 	}
 
 	init {
-		val placemark = parseKmlFile(googleMap, skiRuns.bounds, context).first()
+		val placemark = parseKmlFile(googleMap, skiAreaObjects.skiAreaBounds, context).first()
 		val kmlPolygon = placemark.geometry as KmlPolygon
 		skiAreaBounds = PolygonMapItem(placemark, R.drawable.ic_missing, kmlPolygon.outerBoundaryCoordinates)
 	}

@@ -10,17 +10,20 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import xyz.thespud.skimap.mapItem.InfoMapMarker
 import xyz.thespud.skimap.mapItem.PolygonMapItem
 
-class InfoLocationManager(skiRuns: SkiRuns, icons: CustomIcons, googleMap: GoogleMap, context: Context):
-	LocationManager<InfoMapMarker>(skiRuns, icons, googleMap, context, true) {
+class InfoLocationManager(skiAreaObjects: SkiAreaObjects, icons: CustomIcons, googleMap: GoogleMap, context: Context):
+	LocationManager<InfoMapMarker>(skiAreaObjects, icons, googleMap, context, true) {
+
+	private var previousSuccessfulMapMarker: InfoMapMarker? = null
 
 	fun resetLocations() {
 		currentLocation = null
 		previousLocation = null
+		previousSuccessfulMapMarker = null
 		isOnChairlift = null
 	}
 
-	fun getRunMarker(polygonMapItems: List<PolygonMapItem>, location: Location,
-	                         markerColor: BitmapDescriptor, color: Int): InfoMapMarker? {
+	fun getRunMarker(polygonMapItems: List<PolygonMapItem>, location: Location, markerColor: BitmapDescriptor,
+	                 color: Int): InfoMapMarker? {
 		val mapItem = locationInBounds(location, polygonMapItems)
 		if (mapItem != null) { return InfoMapMarker(mapItem, location, markerColor, color) }
 		return null
@@ -68,23 +71,23 @@ class InfoLocationManager(skiRuns: SkiRuns, icons: CustomIcons, googleMap: Googl
 		}
 
 		var run = getRunMarker(greenRunBounds, location, GREEN_MARKER, Color.GREEN)
-		if (run != null) {
-			return checkIfLiftlineRun(run)
-		}
+		if (run != null) { return checkIfLiftlineRun(run) }
 
 		run = getRunMarker(blueRunBounds, location, BLUE_MARKER, Color.BLUE)
-		if (run != null) {
-			return checkIfLiftlineRun(run)
-		}
+		if (run != null) { return checkIfLiftlineRun(run) }
 
 		run = getRunMarker(blackRunBounds, location, BLACK_MARKER, Color.BLACK)
-		if (run != null) {
-			return checkIfLiftlineRun(run)
-		}
+		if (run != null) { return checkIfLiftlineRun(run) }
 
 		run = getRunMarker(doubleBlackRunBounds, location, BLACK_MARKER, Color.BLACK)
+		if (run != null) { return checkIfLiftlineRun(run) }
+
+		// Since were not in a chairlift terminal, and not on a ski run,
+		// just check to see if were only on the chairlift polygon
+		run = getRunMarker(chairliftBounds, location, RED_MARKER, Color.RED)
 		if (run != null) {
-			return checkIfLiftlineRun(run)
+			isOnChairlift = run.mapItem
+			return run
 		}
 
 		return null
@@ -100,11 +103,44 @@ class InfoLocationManager(skiRuns: SkiRuns, icons: CustomIcons, googleMap: Googl
 		return getRunMarker(otherBounds, location, OTHER_MARKER, Color.MAGENTA)
 	}
 
+	override fun getMapMarker(location: Location): InfoMapMarker {
+		updateLocations(location)
+
+		var marker: InfoMapMarker? = checkIfInChairliftTerminal()
+		if (marker != null) {
+			previousSuccessfulMapMarker = marker
+			return marker
+		}
+
+		marker = checkIfOnRun()
+		if (marker != null) {
+			previousSuccessfulMapMarker = marker
+			return marker
+		}
+
+		marker = getInLocation()
+		if (marker != null) {
+			previousSuccessfulMapMarker = marker
+			return marker
+		}
+
+		val previousRun = previousSuccessfulMapMarker
+		if (previousRun != null && previousRun.mapItem.name != UNKNOWN_LOCATION) {
+			return InfoMapMarker(previousRun.mapItem, location, previousRun.markerColor, previousRun.color)
+		}
+
+		Log.i("getMapMarker", "Unable to determine location")
+		val unknownMapItem = PolygonMapItem(UNKNOWN_LOCATION)
+		return InfoMapMarker(unknownMapItem, location, OTHER_MARKER, Color.MAGENTA)
+	}
+
 	companion object {
 		val RED_MARKER = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)
 		val GREEN_MARKER = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)
 		val BLUE_MARKER = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)
 		val BLACK_MARKER = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE)
 		val OTHER_MARKER = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_MAGENTA)
+
+		const val UNKNOWN_LOCATION = "Unknown Location"
 	}
 }

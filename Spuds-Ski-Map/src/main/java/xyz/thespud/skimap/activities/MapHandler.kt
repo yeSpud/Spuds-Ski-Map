@@ -2,41 +2,14 @@ package xyz.thespud.skimap.activities
 
 import android.util.Log
 import android.view.View
-import androidx.annotation.AnyThread
-import androidx.annotation.ColorRes
-import androidx.annotation.DrawableRes
-import androidx.annotation.RawRes
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.fragment.app.FragmentActivity
-import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.model.CameraPosition
-import com.google.android.gms.maps.model.Dash
-import com.google.android.gms.maps.model.Gap
-import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
-import com.google.android.gms.maps.model.RoundCap
-import com.google.maps.android.data.kml.KmlLineString
-import com.google.maps.android.data.kml.KmlPlacemark
-import com.google.maps.android.data.kml.KmlPolygon
-import com.google.maps.android.ktx.addPolygon
-import com.google.maps.android.ktx.addPolyline
-import com.google.maps.android.ktx.utils.kml.kmlLayer
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.joinAll
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import xyz.thespud.skimap.R
-import xyz.thespud.skimap.locationmanager.CustomIcons
 import xyz.thespud.skimap.locationmanager.LocationManager
-import xyz.thespud.skimap.mapItem.PolygonMapItem
-import xyz.thespud.skimap.mapItem.PolylineMapItem
-import xyz.thespud.skimap.locationmanager.SkiRuns
 
 abstract class MapHandler(private val view: View, private val cameraPosition: CameraPosition,
                           private val cameraBounds: LatLngBounds?, private val showDebug: Boolean): OnMapReadyCallback {
