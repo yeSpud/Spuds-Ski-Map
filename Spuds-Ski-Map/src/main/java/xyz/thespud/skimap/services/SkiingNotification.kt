@@ -25,15 +25,9 @@ object SkiingNotification {
 
 	const val TRACKING_SERVICE_ID = 69
 
-	const val ACTIVITY_SUMMARY_ID = 420
-
 	const val NOTIFICATION_PERMISSION = 1231
 
-	const val ACTIVITY_SUMMARY_LAUNCH_DATE = "activitySummaryLaunchDate"
-
 	const val TRACKING_SERVICE_CHANNEL_ID = "skiAppTracker"
-
-	const val ACTIVITY_SUMMARY_CHANNEL_ID = "skiAppProgress"
 
 
 	fun setupNotificationChannels(context: Context) {
@@ -43,11 +37,7 @@ object SkiingNotification {
 			TRACKING_SERVICE_CHANNEL_ID,
 			context.getString(R.string.tracking_notification_channel_name), NotificationManager.IMPORTANCE_LOW)
 
-		val progressNotificationChannel = NotificationChannel(
-			ACTIVITY_SUMMARY_CHANNEL_ID,
-			context.getString(R.string.activity_summary_notification_channel_name), NotificationManager.IMPORTANCE_DEFAULT)
-
-		notificationManager.createNotificationChannels(listOf(trackingNotificationChannel, progressNotificationChannel))
+		notificationManager.createNotificationChannels(listOf(trackingNotificationChannel))
 		Log.v("setupNotificationChannels", "Created new notification channel")
 	}
 
@@ -86,36 +76,6 @@ object SkiingNotification {
 			Log.d("updateTrackingNotification", "Setting notification text to: $notificationText")
 		}
 		notificationManager.notify(TRACKING_SERVICE_ID, notification)
-	}
-
-	@Deprecated("Will be removed - handle this in your own app")
-	fun createActivityNotification(context: Context, activityToLaunch: KClass<out FragmentActivity>,
-	                               @DrawableRes icon: Int, fileToOpen: String): Notification {
-		val notificationIntent = Intent(context, activityToLaunch::class.java)
-		notificationIntent.putExtra(ACTIVITY_SUMMARY_LAUNCH_DATE, fileToOpen)
-
-		val pendingIntent = PendingIntent.getActivity(context, 0, notificationIntent,
-			PendingIntent.FLAG_IMMUTABLE)
-
-		val builder: NotificationCompat.Builder = getNotificationBuilder(context, ACTIVITY_SUMMARY_CHANNEL_ID,
-			icon, true, R.string.activity_notification_text, pendingIntent)
-
-		return builder.build()
-	}
-
-	@Deprecated("Will be removed - handle this in your own app")
-	fun createActivityNotification(context: Context, activityToLaunch: KClass<out FragmentActivity>,
-	                               @DrawableRes icon: Int, fileToOpen: Int): Notification {
-		val notificationIntent = Intent(context, activityToLaunch::class.java)
-		notificationIntent.putExtra(ACTIVITY_SUMMARY_LAUNCH_DATE, fileToOpen)
-
-		val pendingIntent = PendingIntent.getActivity(context, 0, notificationIntent,
-			PendingIntent.FLAG_IMMUTABLE)
-
-		val builder: NotificationCompat.Builder = getNotificationBuilder(context, ACTIVITY_SUMMARY_CHANNEL_ID,
-			icon, true, R.string.activity_notification_text, pendingIntent)
-
-		return builder.build()
 	}
 
 	fun createTrackingNotification(context: Context, intentToLaunch: Intent?, @DrawableRes appIcon: Int,

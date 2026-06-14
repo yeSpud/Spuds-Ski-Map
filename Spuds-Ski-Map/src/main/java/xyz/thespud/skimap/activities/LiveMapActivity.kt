@@ -97,9 +97,8 @@ class LiveMapActivity(val activity: FragmentActivity, view: View, cameraPosition
 		val toast = if (mapMarker == null) {
 			Toast.makeText(activity, R.string.your_location, Toast.LENGTH_LONG)
 		} else {
-			// todo Update string to be more ambiguous (currently on vs currently in)
-			Toast.makeText(activity, activity.getString(R.string.current_chairlift, mapMarker.name),
-				Toast.LENGTH_LONG)
+			Toast.makeText(activity, activity.getString(R.string.current_location,
+				mapMarker.name), Toast.LENGTH_LONG)
 		}
 
 		toast.show()

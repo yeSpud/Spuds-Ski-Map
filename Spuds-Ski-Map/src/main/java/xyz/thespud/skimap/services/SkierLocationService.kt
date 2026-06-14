@@ -24,8 +24,6 @@ class SkierLocationService : Service(), LocationListener {
 
 	private lateinit var locationManager: LocationManager
 
-	// var _liveLocation: LiveLocationManager? = null
-
 	override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
 		Log.v(TAG, "onStartCommand called!")
 		super.onStartCommand(intent, flags, startId)
@@ -55,8 +53,6 @@ class SkierLocationService : Service(), LocationListener {
 				} else {
 					startForeground(SkiingNotification.TRACKING_SERVICE_ID, notification)
 				}
-
-				// _liveLocation = LiveLocationManager.getInstance()
 
 				sendBroadcast(Intent(START_TRACKING_BROADCAST))
 			}
@@ -105,15 +101,11 @@ class SkierLocationService : Service(), LocationListener {
 		Log.v(TAG, "Location updated")
 
 		val liveLocation = try {
-			LiveLocationManager.getInstance() //_liveLocation
+			LiveLocationManager.getInstance()
 		} catch (e: IllegalStateException) {
 			Log.w(TAG, "Live location tracking not yet ready", e)
 			return
 		}
-		/*if (liveLocation == null) {
-			Log.w(TAG, "Live location tracking not yet ready")
-			return
-		}*/
 
 		// If we are not on the mountain stop the tracking.
 		if (!PolyUtil.containsLocation(location.latitude, location.longitude,
@@ -136,9 +128,8 @@ class SkierLocationService : Service(), LocationListener {
 			SkiingNotification.updateTrackingNotification(this, intent,
 				applicationInfo.icon, getString(R.string.tracking_notice), null)
 		} else {
-			// todo: Update string to be more ambiguous (currently on vs currently in)
 			SkiingNotification.displaySkiingActivity(this, intent,
-				applicationInfo.icon, R.string.current_chairlift, mapMarker)
+				applicationInfo.icon, R.string.current_location, mapMarker)
 		}
 	}
 
