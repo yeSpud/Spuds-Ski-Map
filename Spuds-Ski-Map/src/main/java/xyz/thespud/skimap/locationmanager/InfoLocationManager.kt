@@ -13,9 +13,12 @@ import xyz.thespud.skimap.mapItem.PolygonMapItem
 class InfoLocationManager(skiAreaObjects: SkiAreaObjects, icons: CustomIcons, googleMap: GoogleMap, context: Context):
 	LocationManager<InfoMapMarker>(skiAreaObjects, icons, googleMap, context, true) {
 
+	private var previousSuccessfulMapMarker: InfoMapMarker? = null
+
 	fun resetLocations() {
 		currentLocation = null
 		previousLocation = null
+		previousSuccessfulMapMarker = null
 		isOnChairlift = null
 	}
 
@@ -100,11 +103,44 @@ class InfoLocationManager(skiAreaObjects: SkiAreaObjects, icons: CustomIcons, go
 		return getRunMarker(otherBounds, location, OTHER_MARKER, Color.MAGENTA)
 	}
 
+	override fun getMapMarker(location: Location): InfoMapMarker {
+		updateLocations(location)
+
+		var marker: InfoMapMarker? = checkIfInChairliftTerminal()
+		if (marker != null) {
+			previousSuccessfulMapMarker = marker
+			return marker
+		}
+
+		marker = checkIfOnRun()
+		if (marker != null) {
+			previousSuccessfulMapMarker = marker
+			return marker
+		}
+
+		marker = getInLocation()
+		if (marker != null) {
+			previousSuccessfulMapMarker = marker
+			return marker
+		}
+
+		val previousRun = previousSuccessfulMapMarker
+		if (previousRun != null && previousRun.mapItem.name != UNKNOWN_LOCATION) {
+			return InfoMapMarker(previousRun.mapItem, location, previousRun.markerColor, previousRun.color)
+		}
+
+		Log.i("getMapMarker", "Unable to determine location")
+		val unknownMapItem = PolygonMapItem(UNKNOWN_LOCATION)
+		return InfoMapMarker(unknownMapItem, location, OTHER_MARKER, Color.MAGENTA)
+	}
+
 	companion object {
 		val RED_MARKER = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)
 		val GREEN_MARKER = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)
 		val BLUE_MARKER = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)
 		val BLACK_MARKER = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE)
 		val OTHER_MARKER = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_MAGENTA)
+
+		const val UNKNOWN_LOCATION = "Unknown Location"
 	}
 }

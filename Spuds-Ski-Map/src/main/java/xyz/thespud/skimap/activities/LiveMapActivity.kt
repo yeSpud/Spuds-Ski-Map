@@ -93,29 +93,12 @@ class LiveMapActivity(val activity: FragmentActivity, view: View, cameraPosition
 
 	// fixme callback not being called when location dot is clicked
 	override fun onMyLocationClick(location: Location) {
-		locationManager.updateLocations(location)
-
-		var toast = Toast.makeText(activity, R.string.your_location, Toast.LENGTH_LONG)
-
-		var mapMarker = locationManager.checkIfInChairliftTerminal()
-		if (mapMarker != null) {
-			toast = Toast.makeText(activity, activity.getString(R.string.current_chairlift, mapMarker.name),
-				Toast.LENGTH_LONG)
-			toast.show()
-			return
-		}
-
-		mapMarker = locationManager.checkIfOnRun()
-		if (mapMarker != null) {
-			toast = Toast.makeText(activity, activity.getString(R.string.current_chairlift, mapMarker.name),
-				Toast.LENGTH_LONG)
-			toast.show()
-			return
-		}
-
-		mapMarker = locationManager.getInLocation()
-		if (mapMarker != null) {
-			toast = Toast.makeText(activity, activity.getString(R.string.current_other, mapMarker.name),
+		val mapMarker = locationManager.getMapMarker(location)
+		val toast = if (mapMarker == null) {
+			Toast.makeText(activity, R.string.your_location, Toast.LENGTH_LONG)
+		} else {
+			// todo Update string to be more ambiguous (currently on vs currently in)
+			Toast.makeText(activity, activity.getString(R.string.current_chairlift, mapMarker.name),
 				Toast.LENGTH_LONG)
 		}
 

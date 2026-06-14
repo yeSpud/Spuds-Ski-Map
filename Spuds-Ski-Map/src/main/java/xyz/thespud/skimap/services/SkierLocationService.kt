@@ -126,35 +126,20 @@ class SkierLocationService : Service(), LocationListener {
 			return
 		}
 
-		liveLocation.updateLocations(location)
-
 		sendBroadcast(Intent(UPDATE_TRACKING_BROADCAST))
 
+		// FIXME Fix activity not launching
 		val intent = Intent(this, LiveMapActivity::class.java)
 
-		var mapMarker = liveLocation.checkIfInChairliftTerminal()
-		if (mapMarker != null) {
+		val mapMarker = liveLocation.getMapMarker(location)
+		if (mapMarker == null) {
+			SkiingNotification.updateTrackingNotification(this, intent,
+				applicationInfo.icon, getString(R.string.tracking_notice), null)
+		} else {
+			// todo: Update string to be more ambiguous (currently on vs currently in)
 			SkiingNotification.displaySkiingActivity(this, intent,
 				applicationInfo.icon, R.string.current_chairlift, mapMarker)
-			return
 		}
-
-		mapMarker = liveLocation.checkIfOnRun()
-		if (mapMarker != null) {
-			SkiingNotification.displaySkiingActivity(this, intent,
-				applicationInfo.icon, R.string.current_chairlift, mapMarker)
-			return
-		}
-
-		mapMarker = liveLocation.getInLocation()
-		if (mapMarker != null) {
-			SkiingNotification.displaySkiingActivity(this, intent,
-				applicationInfo.icon, R.string.current_other, mapMarker)
-			return
-		}
-
-		SkiingNotification.updateTrackingNotification(this, intent,
-			applicationInfo.icon, getString(R.string.tracking_notice), null)
 	}
 
 	fun stopService() {

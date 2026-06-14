@@ -1,6 +1,7 @@
 package xyz.thespud.skimap.locationmanager
 
 import android.content.Context
+import android.location.Location
 import android.util.Log
 import com.google.android.gms.maps.GoogleMap
 import com.google.maps.android.data.kml.KmlPolygon
@@ -86,6 +87,22 @@ class LiveLocationManager private constructor(skiAreaObjects: SkiAreaObjects, ic
 		}
 
 		return locationInBounds(location, otherBounds)
+	}
+
+	override fun getMapMarker(location: Location): PolygonMapItem? {
+		updateLocations(location)
+
+		var mapMarker = checkIfInChairliftTerminal()
+		if (mapMarker != null) { return mapMarker }
+
+		mapMarker = checkIfOnRun()
+		if (mapMarker != null) { return mapMarker }
+
+		mapMarker = getInLocation()
+		if (mapMarker != null) { return mapMarker }
+
+		Log.i("getMapMarker", "Unable to determine live location")
+		return null
 	}
 
 	companion object {

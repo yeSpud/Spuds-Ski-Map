@@ -71,6 +71,8 @@ abstract class LocationManager<T>(skiAreaObjects: SkiAreaObjects, private val ic
 
 	abstract fun getInLocation(): T?
 
+	abstract fun getMapMarker(location: Location): T?
+
 	protected fun parseKmlFile(googleMap: GoogleMap, @RawRes file: Int, context: Context): Iterable<KmlPlacemark> {
 		val kml = kmlLayer(googleMap, file, context)
 		if (kml.placemarks.spliterator().estimateSize() == 0L) {
