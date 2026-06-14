@@ -33,6 +33,7 @@ abstract class LocationManager<T>(skiAreaObjects: SkiAreaObjects, private val ic
 	val doubleBlackRunPolylines: List<PolylineMapItem>
 
 	val chairliftTerminals: List<PolygonMapItem>
+	val chairliftBounds: List<PolygonMapItem>
 	val greenRunBounds: List<PolygonMapItem>
 	val blueRunBounds: List<PolygonMapItem>
 	val blackRunBounds: List<PolygonMapItem>
@@ -177,7 +178,7 @@ abstract class LocationManager<T>(skiAreaObjects: SkiAreaObjects, private val ic
 		val tag = "LocationManager"
 		Log.v(tag, "Started drawing polylines and polygons")
 
-		val liftsPolylineFile = skiAreaObjects.chairliftsPolyline
+		val liftsPolylineFile = skiAreaObjects.chairliftsPolylines
 		if (liftsPolylineFile != null) {
 			Log.d(tag, "Loading chairlift polyline")
 			val chairliftColor = if (drawOpaqueRuns) { R.color.chairlift_opaque } else { R.color.chairlift }
@@ -228,16 +229,24 @@ abstract class LocationManager<T>(skiAreaObjects: SkiAreaObjects, private val ic
 			Log.d(tag, "Finished loading double black run polylines")
 		} else { doubleBlackRunPolylines = emptyList() }
 
-		// var terminals = mutableListOf<PolygonMapItem>()
+
 		val terminals = skiAreaObjects.chairliftTerminals
 		if (terminals != null) {
-			Log.d(tag, "Adding starting chairlift terminals")
+			Log.d(tag, "Adding chairlift terminals")
 
 			chairliftTerminals = loadPolygons(googleMap,terminals, context, R.color.chairlift_polygon,
 				IconType.CHAIRLIFT)
-			Log.d(tag, "Finished adding ending chairlift terminals")
+			Log.d(tag, "Finished adding chairlift terminals")
 		} else { chairliftTerminals = emptyList() }
 
+		val skiliftBounds = skiAreaObjects.chairliftBounds
+		if (skiliftBounds != null) {
+			Log.d(tag, "Adding chairlift bounds")
+
+			chairliftBounds = loadPolygons(googleMap, skiliftBounds, context, R.color.chairlift_polygon,
+				IconType.CHAIRLIFT)
+			Log.d(tag, "Finished adding chairlift bounds")
+		} else { chairliftBounds = emptyList() }
 
 		val greenBounds = skiAreaObjects.greenRunBounds
 		if (greenBounds != null) {

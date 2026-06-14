@@ -5,7 +5,7 @@ import androidx.annotation.RawRes
 data class SkiAreaObjects(@RawRes val skiAreaBounds: Int) {
 
 	@RawRes
-	var chairliftsPolyline: Int? = null
+	var chairliftsPolylines: Int? = null
 
 	@RawRes
 	var greenRunPolylines: Int? = null
@@ -21,6 +21,9 @@ data class SkiAreaObjects(@RawRes val skiAreaBounds: Int) {
 
 	@RawRes
 	var chairliftTerminals: Int? = null
+
+	@RawRes
+	var chairliftBounds: Int? = null
 
 	@RawRes
 	var greenRunBounds: Int? = null

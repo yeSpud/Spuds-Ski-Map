@@ -56,23 +56,23 @@ class LiveLocationManager private constructor(skiAreaObjects: SkiAreaObjects, ic
 		}
 
 		var run = locationInBounds(location, greenRunBounds)
-		if (run != null) {
-			return checkIfLiftlineRun(run)
-		}
+		if (run != null) { return checkIfLiftlineRun(run) }
 
 		run = locationInBounds(location, blueRunBounds)
-		if (run != null) {
-			return checkIfLiftlineRun(run)
-		}
+		if (run != null) { return checkIfLiftlineRun(run) }
 
 		run = locationInBounds(location, blackRunBounds)
-		if (run != null) {
-			return checkIfLiftlineRun(run)
-		}
+		if (run != null) { return checkIfLiftlineRun(run) }
 
 		run = locationInBounds(location, doubleBlackRunBounds)
+		if (run != null) { return checkIfLiftlineRun(run) }
+
+		// Since were not in a chairlift terminal, and not on a ski run,
+		// just check to see if were only on the chairlift polygon
+		run = locationInBounds(location, chairliftBounds)
 		if (run != null) {
-			return checkIfLiftlineRun(run)
+			isOnChairlift = run
+			return run
 		}
 
 		return null
