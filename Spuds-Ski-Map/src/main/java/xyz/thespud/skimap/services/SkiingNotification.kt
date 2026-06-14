@@ -88,6 +88,7 @@ object SkiingNotification {
 		notificationManager.notify(TRACKING_SERVICE_ID, notification)
 	}
 
+	@Deprecated("Will be removed - handle this in your own app")
 	fun createActivityNotification(context: Context, activityToLaunch: KClass<out FragmentActivity>,
 	                               @DrawableRes icon: Int, fileToOpen: String): Notification {
 		val notificationIntent = Intent(context, activityToLaunch::class.java)
@@ -102,6 +103,7 @@ object SkiingNotification {
 		return builder.build()
 	}
 
+	@Deprecated("Will be removed - handle this in your own app")
 	fun createActivityNotification(context: Context, activityToLaunch: KClass<out FragmentActivity>,
 	                               @DrawableRes icon: Int, fileToOpen: Int): Notification {
 		val notificationIntent = Intent(context, activityToLaunch::class.java)

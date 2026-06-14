@@ -15,21 +15,25 @@ class PolygonMapItem: MapItem {
 	constructor(name: String): super(name) { this.points = emptyList() }
 
 	override fun parseMetadata(properties: List<String>) {
-		//val metadata = hashMapOf<String, Any>()
+		val tag = "parseMetadata"
 		for (property in properties) {
-			Log.v("parseMetadata", "Parsing property $property")
-			when (property) {
-				LIFTLINE_RUN_KEY -> {
-					val allLifts = property.split(":")[1]
-					metadata[LIFTLINE_RUN_KEY] = allLifts.split(",").forEach { it.trim() }
+			Log.v(tag, "Parsing property '$property' for $name")
+			if (property.startsWith(LIFTLINE_RUN_KEY)) {
+				val allLifts = property.split(":")[1]
+				val liftlines = mutableListOf<String>()
+				for (lift in allLifts.split(",")) {
+					val liftName = lift.trim()
+					Log.v(tag, "Adding $name to liftline of $liftName")
+					liftlines.add(liftName)
 				}
+				metadata[LIFTLINE_RUN_KEY] = liftlines.toList()
 			}
 		}
-		//return metadata
 	}
 
 	fun isLiftlineRun(chairliftName: String): Boolean {
-		val liftlines = metadata[LIFTLINE_RUN_KEY] as? List<String>? ?: return false
+		val liftlines = metadata[LIFTLINE_RUN_KEY]
+		if (liftlines == null || liftlines !is List<*>) { return false }
 
 		for (liftline in liftlines) {
 			if (liftline == chairliftName) {

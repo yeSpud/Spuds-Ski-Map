@@ -3,9 +3,7 @@ package xyz.thespud.skimap.locationmanager
 import android.content.Context
 import android.location.Location
 import android.util.Log
-import androidx.annotation.AnyThread
 import androidx.annotation.ColorRes
-import androidx.annotation.DrawableRes
 import androidx.annotation.RawRes
 import androidx.annotation.UiThread
 import com.google.android.gms.maps.GoogleMap
@@ -20,18 +18,12 @@ import com.google.maps.android.data.kml.KmlPolygon
 import com.google.maps.android.ktx.addPolygon
 import com.google.maps.android.ktx.addPolyline
 import com.google.maps.android.ktx.utils.kml.kmlLayer
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.withContext
 import xyz.thespud.skimap.R
 import xyz.thespud.skimap.mapItem.MapItem
 import xyz.thespud.skimap.mapItem.PolygonMapItem
 import xyz.thespud.skimap.mapItem.PolylineMapItem
 
-abstract class LocationManager<T>(skiRuns: SkiRuns, private val icons: CustomIcons, googleMap: GoogleMap,
+abstract class LocationManager<T>(skiAreaObjects: SkiAreaObjects, private val icons: CustomIcons, googleMap: GoogleMap,
                                   context: Context, drawOpaqueRuns: Boolean) {
 
 	val chairliftPolylines: List<PolylineMapItem>
@@ -41,6 +33,7 @@ abstract class LocationManager<T>(skiRuns: SkiRuns, private val icons: CustomIco
 	val doubleBlackRunPolylines: List<PolylineMapItem>
 
 	val chairliftTerminals: List<PolygonMapItem>
+	val chairliftBounds: List<PolygonMapItem>
 	val greenRunBounds: List<PolygonMapItem>
 	val blueRunBounds: List<PolygonMapItem>
 	val blackRunBounds: List<PolygonMapItem>
@@ -185,7 +178,7 @@ abstract class LocationManager<T>(skiRuns: SkiRuns, private val icons: CustomIco
 		val tag = "LocationManager"
 		Log.v(tag, "Started drawing polylines and polygons")
 
-		val liftsPolylineFile = skiRuns.chairliftsPolyline
+		val liftsPolylineFile = skiAreaObjects.chairliftsPolylines
 		if (liftsPolylineFile != null) {
 			Log.d(tag, "Loading chairlift polyline")
 			val chairliftColor = if (drawOpaqueRuns) { R.color.chairlift_opaque } else { R.color.chairlift }
@@ -196,7 +189,7 @@ abstract class LocationManager<T>(skiRuns: SkiRuns, private val icons: CustomIco
 			Log.d(tag, "Finished loading chairlift polyline")
 		} else { chairliftPolylines = emptyList() }
 
-		val greenPolylines = skiRuns.greenRunPolylines
+		val greenPolylines = skiAreaObjects.greenRunPolylines
 		if (greenPolylines != null) {
 			Log.d(tag, "Loading green run polylines")
 			val greenColor = if (drawOpaqueRuns) { R.color.green_opaque } else { R.color.green }
@@ -206,7 +199,7 @@ abstract class LocationManager<T>(skiRuns: SkiRuns, private val icons: CustomIco
 			Log.d(tag, "Finished loading green run polylines")
 		} else { greenRunPolylines = emptyList() }
 
-		val bluePolylines = skiRuns.blueRunPolylines
+		val bluePolylines = skiAreaObjects.blueRunPolylines
 		if (bluePolylines != null) {
 			Log.d(tag, "Loading blue run polylines")
 			val blueColor = if (drawOpaqueRuns) { R.color.blue_opaque } else { R.color.blue }
@@ -216,7 +209,7 @@ abstract class LocationManager<T>(skiRuns: SkiRuns, private val icons: CustomIco
 			Log.d(tag, "Finished loading blue run polylines")
 		} else { blueRunPolylines = emptyList() }
 
-		val blackPolylines = skiRuns.blackRunPolylines
+		val blackPolylines = skiAreaObjects.blackRunPolylines
 		if (blackPolylines != null) {
 			Log.d(tag, "Loading black run polylines")
 			val blackColor = if (drawOpaqueRuns) { R.color.black_opaque } else { R.color.black }
@@ -226,7 +219,7 @@ abstract class LocationManager<T>(skiRuns: SkiRuns, private val icons: CustomIco
 			Log.d(tag, "Finished loading black run polylines")
 		} else { blackRunPolylines = emptyList() }
 
-		val doubleBlackPolylines = skiRuns.doubleBlackRunPolylines
+		val doubleBlackPolylines = skiAreaObjects.doubleBlackRunPolylines
 		if (doubleBlackPolylines != null) {
 			Log.d(tag, "Loading double black run polylines")
 			val blackColor = if (drawOpaqueRuns) { R.color.black_opaque } else { R.color.black }
@@ -236,18 +229,26 @@ abstract class LocationManager<T>(skiRuns: SkiRuns, private val icons: CustomIco
 			Log.d(tag, "Finished loading double black run polylines")
 		} else { doubleBlackRunPolylines = emptyList() }
 
-		// var terminals = mutableListOf<PolygonMapItem>()
-		val terminals = skiRuns.chairliftTerminals
+
+		val terminals = skiAreaObjects.chairliftTerminals
 		if (terminals != null) {
-			Log.d(tag, "Adding starting chairlift terminals")
+			Log.d(tag, "Adding chairlift terminals")
 
 			chairliftTerminals = loadPolygons(googleMap,terminals, context, R.color.chairlift_polygon,
 				IconType.CHAIRLIFT)
-			Log.d(tag, "Finished adding ending chairlift terminals")
+			Log.d(tag, "Finished adding chairlift terminals")
 		} else { chairliftTerminals = emptyList() }
 
+		val skiliftBounds = skiAreaObjects.chairliftBounds
+		if (skiliftBounds != null) {
+			Log.d(tag, "Adding chairlift bounds")
 
-		val greenBounds = skiRuns.greenRunBounds
+			chairliftBounds = loadPolygons(googleMap, skiliftBounds, context, R.color.chairlift_polygon,
+				IconType.CHAIRLIFT)
+			Log.d(tag, "Finished adding chairlift bounds")
+		} else { chairliftBounds = emptyList() }
+
+		val greenBounds = skiAreaObjects.greenRunBounds
 		if (greenBounds != null) {
 			Log.d(tag, "Adding green bounds")
 
@@ -256,7 +257,7 @@ abstract class LocationManager<T>(skiRuns: SkiRuns, private val icons: CustomIco
 			Log.d(tag, "Finished adding green bounds")
 		} else { greenRunBounds = emptyList() }
 
-		val blueBounds = skiRuns.blueRunBounds
+		val blueBounds = skiAreaObjects.blueRunBounds
 		if (blueBounds != null) {
 			Log.d(tag, "Adding blue bounds")
 
@@ -265,7 +266,7 @@ abstract class LocationManager<T>(skiRuns: SkiRuns, private val icons: CustomIco
 			Log.d(tag, "Finished adding blue bounds")
 		} else { blueRunBounds = emptyList() }
 
-		val blackBounds = skiRuns.blackRunBounds
+		val blackBounds = skiAreaObjects.blackRunBounds
 		if (blackBounds != null) {
 			Log.d(tag, "Adding black bounds")
 
@@ -274,7 +275,7 @@ abstract class LocationManager<T>(skiRuns: SkiRuns, private val icons: CustomIco
 			Log.d(tag, "Finished adding black bounds")
 		} else { blackRunBounds = emptyList() }
 
-		val doubleBlackBounds = skiRuns.doubleBlackRunBounds
+		val doubleBlackBounds = skiAreaObjects.doubleBlackRunBounds
 		if (doubleBlackBounds != null) {
 			Log.d(tag, "Adding double black bounds")
 
@@ -283,7 +284,7 @@ abstract class LocationManager<T>(skiRuns: SkiRuns, private val icons: CustomIco
 			Log.d(tag, "Finished adding double black bounds")
 		} else { doubleBlackRunBounds = emptyList() }
 
-		val other = skiRuns.other
+		val other = skiAreaObjects.other
 		if (other != null) {
 			Log.d(tag, "Adding other bounds")
 

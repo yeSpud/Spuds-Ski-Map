@@ -10,8 +10,8 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import xyz.thespud.skimap.mapItem.InfoMapMarker
 import xyz.thespud.skimap.mapItem.PolygonMapItem
 
-class InfoLocationManager(skiRuns: SkiRuns, icons: CustomIcons, googleMap: GoogleMap, context: Context):
-	LocationManager<InfoMapMarker>(skiRuns, icons, googleMap, context, true) {
+class InfoLocationManager(skiAreaObjects: SkiAreaObjects, icons: CustomIcons, googleMap: GoogleMap, context: Context):
+	LocationManager<InfoMapMarker>(skiAreaObjects, icons, googleMap, context, true) {
 
 	fun resetLocations() {
 		currentLocation = null
@@ -19,8 +19,8 @@ class InfoLocationManager(skiRuns: SkiRuns, icons: CustomIcons, googleMap: Googl
 		isOnChairlift = null
 	}
 
-	fun getRunMarker(polygonMapItems: List<PolygonMapItem>, location: Location,
-	                         markerColor: BitmapDescriptor, color: Int): InfoMapMarker? {
+	fun getRunMarker(polygonMapItems: List<PolygonMapItem>, location: Location, markerColor: BitmapDescriptor,
+	                 color: Int): InfoMapMarker? {
 		val mapItem = locationInBounds(location, polygonMapItems)
 		if (mapItem != null) { return InfoMapMarker(mapItem, location, markerColor, color) }
 		return null
@@ -68,23 +68,23 @@ class InfoLocationManager(skiRuns: SkiRuns, icons: CustomIcons, googleMap: Googl
 		}
 
 		var run = getRunMarker(greenRunBounds, location, GREEN_MARKER, Color.GREEN)
-		if (run != null) {
-			return checkIfLiftlineRun(run)
-		}
+		if (run != null) { return checkIfLiftlineRun(run) }
 
 		run = getRunMarker(blueRunBounds, location, BLUE_MARKER, Color.BLUE)
-		if (run != null) {
-			return checkIfLiftlineRun(run)
-		}
+		if (run != null) { return checkIfLiftlineRun(run) }
 
 		run = getRunMarker(blackRunBounds, location, BLACK_MARKER, Color.BLACK)
-		if (run != null) {
-			return checkIfLiftlineRun(run)
-		}
+		if (run != null) { return checkIfLiftlineRun(run) }
 
 		run = getRunMarker(doubleBlackRunBounds, location, BLACK_MARKER, Color.BLACK)
+		if (run != null) { return checkIfLiftlineRun(run) }
+
+		// Since were not in a chairlift terminal, and not on a ski run,
+		// just check to see if were only on the chairlift polygon
+		run = getRunMarker(chairliftBounds, location, RED_MARKER, Color.RED)
 		if (run != null) {
-			return checkIfLiftlineRun(run)
+			isOnChairlift = run.mapItem
+			return run
 		}
 
 		return null

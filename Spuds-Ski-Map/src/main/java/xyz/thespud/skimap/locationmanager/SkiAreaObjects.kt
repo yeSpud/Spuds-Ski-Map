@@ -2,10 +2,10 @@ package xyz.thespud.skimap.locationmanager
 
 import androidx.annotation.RawRes
 
-data class SkiRuns(@RawRes val bounds: Int) {
+data class SkiAreaObjects(@RawRes val skiAreaBounds: Int) {
 
 	@RawRes
-	var chairliftsPolyline: Int? = null
+	var chairliftsPolylines: Int? = null
 
 	@RawRes
 	var greenRunPolylines: Int? = null
@@ -21,6 +21,9 @@ data class SkiRuns(@RawRes val bounds: Int) {
 
 	@RawRes
 	var chairliftTerminals: Int? = null
+
+	@RawRes
+	var chairliftBounds: Int? = null
 
 	@RawRes
 	var greenRunBounds: Int? = null
