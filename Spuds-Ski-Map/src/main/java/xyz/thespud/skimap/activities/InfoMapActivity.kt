@@ -94,37 +94,6 @@ class InfoMapActivity(val activity: AppCompatActivity, view: View, cameraPositio
 		clearMap()
 	}
 
-	/**
-	 * WARNING: This runs on the UI thread so it'll freeze the app while adding all the circles
-	 */
-	/*
-	suspend fun addCirclesToMap() = withContext(Dispatchers.Main) {
-		Log.d("addCirclesToMap", "Started adding circles to map")
-		for (mapMarker in loadedMapMarkers) {
-			val location = LatLng(mapMarker.location.latitude, mapMarker.location.longitude)
-
-			val circle = googleMap?.addCircle { // FIXME this is using too much RAM & causes too much lag
-				center(location)
-				strokeColor(mapMarker.color)
-				fillColor(mapMarker.color)
-				clickable(true)
-				radius(3.0)
-				zIndex(50.0F)
-				visible(showDots)
-			}
-
-			if (circle != null) {
-				circle.tag = mapMarker
-				circles.add(circle)
-			}
-
-		}
-
-		System.gc()
-		Log.d("addCirclesToMap", "Finished adding circles to map")
-	}
-	 */
-
 	fun loadSkiRuns(mapMarkers: List<InfoMapMarker>) {
 		val map = googleMap
 		if (map == null) {
@@ -141,8 +110,7 @@ class InfoMapActivity(val activity: AppCompatActivity, view: View, cameraPositio
 			// If our previous marker has a different name its likely because it's a different run,
 			// so commit the run points up to this point with the previous run name and begin anew
 			if (previousMapMarker != null && mapMarker.mapItem.name != previousMapMarker.mapItem.name) {
-				val skiRun = SkiRun(previousMapMarker.mapItem.name, previousMapMarker.mapItem.icon,
-					previousMapMarker.color, runPoints.toList(), map)
+				val skiRun = SkiRun(previousMapMarker, runPoints.toList(), map)
 				parsedSkiRuns.add(skiRun)
 
 				// Reset
@@ -155,8 +123,7 @@ class InfoMapActivity(val activity: AppCompatActivity, view: View, cameraPositio
 
 		// Commit the final run location
 		if (previousMapMarker != null) {
-			val skiRun = SkiRun(previousMapMarker.mapItem.name, previousMapMarker.mapItem.icon,
-				previousMapMarker.color, runPoints.toList(), map)
+			val skiRun = SkiRun(previousMapMarker, runPoints.toList(), map)
 			parsedSkiRuns.add(skiRun)
 		}
 
@@ -183,14 +150,20 @@ class InfoMapActivity(val activity: AppCompatActivity, view: View, cameraPositio
 	override fun getInfoContents(marker: Marker): View? {
 		Log.v("CustomInfoWindow", "getInfoContents called")
 
-		if (marker.tag !is InfoMapMarker) {
+		val markerInfo = marker.tag
+		if (markerInfo !is InfoMapMarker) {
+			val unknownClassName = if (markerInfo != null) {
+				"(${markerInfo.javaClass.name})"
+			} else {
+				""
+			}
+			Log.w("CustomInfoWindow", "Marker tag isn't an InfoMapMarker $unknownClassName")
 			return null
 		}
 
 		val markerView: View = activity.layoutInflater.inflate(R.layout.info_window, null)
 		val name: TextView = markerView.findViewById(R.id.marker_name)
 
-		val markerInfo = marker.tag as InfoMapMarker
 		name.text = markerInfo.mapItem.name
 
 		val altitude: TextView = markerView.findViewById(R.id.marker_altitude)

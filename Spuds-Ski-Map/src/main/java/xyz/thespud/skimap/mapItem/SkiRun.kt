@@ -1,15 +1,13 @@
 package xyz.thespud.skimap.mapItem
 
 import android.location.Location
-import androidx.annotation.DrawableRes
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.RoundCap
 import com.google.maps.android.ktx.addCircle
 import com.google.maps.android.ktx.addPolyline
 
-class SkiRun(name: String, @DrawableRes icon: Int, private val color: Int, val locations: List<Location>,
-             private val googleMap: GoogleMap): MapItemBase(name, icon) {
+class SkiRun(private val infoMapMarker: InfoMapMarker, val locations: List<Location>, private val googleMap: GoogleMap): MapItemBase(infoMapMarker.mapItem.name, infoMapMarker.mapItem.icon) {
 
 	val startTime: Long
 	val endTime: Long
@@ -17,16 +15,21 @@ class SkiRun(name: String, @DrawableRes icon: Int, private val color: Int, val l
 	val averageSpeed: Float
 	val maxSpeed: Float
 
+	// fixme this is using too much RAM & causes too much lag
+	@Deprecated("Adding circles to the map yields high memory usage - consider not using it")
 	val circles = lazy {
 		locations.map { location ->
-			googleMap.addCircle {
+			val circle = googleMap.addCircle {
 				center(LatLng(location.latitude, location.longitude))
-				strokeColor(this@SkiRun.color)
-				fillColor(this@SkiRun.color)
+				strokeColor(infoMapMarker.color)
+				fillColor(infoMapMarker.color)
 				clickable(true)
 				radius(3.0)
 				zIndex(50.0F)
 			}
+
+			circle.tag = infoMapMarker
+			circle
 		}
 	}
 
@@ -34,7 +37,7 @@ class SkiRun(name: String, @DrawableRes icon: Int, private val color: Int, val l
 		val latLngs = locations.map { location -> LatLng(location.latitude, location.longitude) }
 		googleMap.addPolyline {
 			addAll(latLngs)
-			color(this@SkiRun.color)
+			color(infoMapMarker.color)
 			zIndex(10.0F)
 			geodesic(true)
 			startCap(RoundCap())

@@ -1,7 +1,6 @@
 package xyz.thespud.skimap.mapItem
 
 import android.util.Log
-import androidx.annotation.DrawableRes
 import com.google.maps.android.data.kml.KmlPlacemark
 import xyz.thespud.skimap.R
 import java.util.Collections
