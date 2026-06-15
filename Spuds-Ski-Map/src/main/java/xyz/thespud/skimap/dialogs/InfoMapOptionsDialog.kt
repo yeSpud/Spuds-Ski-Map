@@ -3,6 +3,7 @@ package xyz.thespud.skimap.dialogs
 import android.util.Log
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 import xyz.thespud.skimap.R
@@ -13,6 +14,7 @@ open class InfoMapOptionsDialog(private val infoMapActivity: InfoMapActivity): M
 
 	private var showDotsImage: MapOptionItem? = null
 
+	@Suppress("DEPRECATION")
 	override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
 		val view = super.getView(position, convertView, parent)
 
@@ -27,12 +29,28 @@ open class InfoMapOptionsDialog(private val infoMapActivity: InfoMapActivity): M
 		}
 
 		showDotsButton.setOnClickListener {
+			var toast = Toast.makeText(infoMapActivity.activity, R.string.toggling_dots, Toast.LENGTH_LONG)
+			toast.show()
 			infoMapActivity.showDots = !infoMapActivity.showDots
 
-			if (infoMapActivity.showDots) {
-				infoMapActivity.activity.lifecycleScope.launch { infoMapActivity.addCirclesToMap() }
-			} else {
-				infoMapActivity.removeCircles()
+			infoMapActivity.activity.lifecycleScope.launch {
+				for (run in infoMapActivity.loadedSkiRuns) {
+
+					if (infoMapActivity.showDots) {
+						for (circle in run.circles.value) { circle.isVisible = true }
+
+						run.polyline.value.isVisible = false
+					} else {
+						if (run.circles.isInitialized()) {
+							for (circle in run.circles.value) { circle.isVisible = false }
+						}
+
+						run.polyline.value.isVisible = true
+					}
+				}
+				toast.cancel()
+				toast = Toast.makeText(infoMapActivity.activity, R.string.done, Toast.LENGTH_SHORT)
+				toast.show()
 			}
 
 			showDotsButton.toggleOptionVisibility()

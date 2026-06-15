@@ -44,5 +44,6 @@
     <string name="out_of_bounds">Stopping location tracking as user is outside ski area bounds</string>
     <string name="starting_tracking">Starting location tracking</string>
     <string name="computing_location">Adding locations to map…</string>
+    <string name="toggling_dots">Toggling dots on map…</string>
     <string name="done">Done!</string>
 </resources>
