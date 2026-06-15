@@ -1,32 +1,27 @@
 package xyz.thespud.skimap.activities
 
 import android.annotation.SuppressLint
+import android.location.Location
 import android.util.Log
 import android.view.View
 import android.widget.TextView
-import androidx.annotation.AnyThread
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.model.CameraPosition
-import com.google.android.gms.maps.model.Circle
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
 import com.google.android.gms.maps.model.Marker
-import com.google.android.gms.maps.model.Polyline
-import com.google.android.gms.maps.model.RoundCap
-import com.google.maps.android.ktx.addCircle
 import com.google.maps.android.ktx.addMarker
-import com.google.maps.android.ktx.addPolyline
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import xyz.thespud.skimap.R
 import xyz.thespud.skimap.locationmanager.CustomIcons
 import xyz.thespud.skimap.locationmanager.InfoLocationManager
 import xyz.thespud.skimap.locationmanager.SkiAreaObjects
 import xyz.thespud.skimap.mapItem.InfoMapMarker
+import xyz.thespud.skimap.mapItem.SkiRun
 import kotlin.math.roundToInt
 
 class InfoMapActivity(val activity: AppCompatActivity, view: View, cameraPosition: CameraPosition,
@@ -36,15 +31,12 @@ class InfoMapActivity(val activity: AppCompatActivity, view: View, cameraPositio
 
 	override var locationManager: InfoLocationManager? = null
 
-	var circles: MutableList<Circle> = mutableListOf()
-
-	var polylines: MutableList<Polyline> = mutableListOf()
-
 	private var runMarker: Marker? = null
 
 	var showDots = false
 
-	var loadedMapMarkers: Array<InfoMapMarker> = emptyArray()
+	var loadedSkiRuns: List<SkiRun> = emptyList()
+	private set
 
 	@SuppressLint("PotentialBehaviorOverride")
 	override val additionalCallback: OnMapReadyCallback = OnMapReadyCallback { map ->
@@ -54,7 +46,17 @@ class InfoMapActivity(val activity: AppCompatActivity, view: View, cameraPositio
 			Log.v("onCircleClicked", "Circle clicked!")
 			map.setInfoWindowAdapter(this)
 
-			val mapMarker = it.tag as InfoMapMarker
+			val mapMarker = it.tag
+			if (mapMarker !is InfoMapMarker) {
+				val unknownClassName = if (mapMarker != null) {
+					"(${mapMarker.javaClass.name})"
+				} else {
+					""
+				}
+				Log.w("onCircleClick", "Circle tag class is not a InfoMapMarker $unknownClassName")
+				return@setOnCircleClickListener
+			}
+
 			val location = LatLng(mapMarker.location.latitude, mapMarker.location.longitude)
 
 			var marker = runMarker
@@ -92,53 +94,10 @@ class InfoMapActivity(val activity: AppCompatActivity, view: View, cameraPositio
 		clearMap()
 	}
 
-	@AnyThread
-	suspend fun addPolylinesToMap() = withContext(Dispatchers.Default) {
-		Log.d("addPolylinesToMap", "Started adding polylines to map")
-		var previousMapMarker: InfoMapMarker? = null
-		val polylinePoints: MutableList<LatLng> = mutableListOf()
-
-		for (mapMarker in loadedMapMarkers) {
-			val location = LatLng(mapMarker.location.latitude, mapMarker.location.longitude)
-			polylinePoints.add(location)
-
-			if (previousMapMarker != null) {
-				if (previousMapMarker.color != mapMarker.color) {
-
-					val polyline = withContext(Dispatchers.Main) {
-						googleMap?.addPolyline {
-							addAll(polylinePoints)
-							color(previousMapMarker.color)
-							zIndex(10.0F)
-							geodesic(true)
-							startCap(RoundCap())
-							endCap(RoundCap())
-							clickable(false)
-							width(8.0F)
-							visible(true)
-						}
-					}
-
-					if (polyline != null) {
-						polylines.add(polyline)
-					}
-
-					polylinePoints.clear()
-					polylinePoints.add(location)
-				}
-			}
-
-			previousMapMarker = mapMarker
-		}
-
-		System.gc()
-		Log.d("addPolylinesToMap", "Finished adding polylines to map")
-	}
-
 	/**
 	 * WARNING: This runs on the UI thread so it'll freeze the app while adding all the circles
 	 */
-	@AnyThread
+	/*
 	suspend fun addCirclesToMap() = withContext(Dispatchers.Main) {
 		Log.d("addCirclesToMap", "Started adding circles to map")
 		for (mapMarker in loadedMapMarkers) {
@@ -164,21 +123,61 @@ class InfoMapActivity(val activity: AppCompatActivity, view: View, cameraPositio
 		System.gc()
 		Log.d("addCirclesToMap", "Finished adding circles to map")
 	}
+	 */
 
-	fun removeCircles() {
-		for (circle in circles) {
-			circle.remove()
+	fun loadSkiRuns(mapMarkers: List<InfoMapMarker>) {
+		val map = googleMap
+		if (map == null) {
+			Log.w("loadSkiRuns", "Map is not yet set up")
+			return
 		}
-		circles.clear()
+
+		val parsedSkiRuns = mutableListOf<SkiRun>()
+
+		val runPoints = mutableListOf<Location>()
+		var previousMapMarker: InfoMapMarker? = null
+		for (mapMarker in mapMarkers) {
+
+			// If our previous marker has a different name its likely because it's a different run,
+			// so commit the run points up to this point with the previous run name and begin anew
+			if (previousMapMarker != null && mapMarker.mapItem.name != previousMapMarker.mapItem.name) {
+				val skiRun = SkiRun(previousMapMarker.mapItem.name, previousMapMarker.mapItem.icon,
+					previousMapMarker.color, runPoints.toList(), map)
+				parsedSkiRuns.add(skiRun)
+
+				// Reset
+				runPoints.clear()
+			}
+
+			runPoints.add(mapMarker.location)
+			previousMapMarker = mapMarker
+		}
+
+		// Commit the final run location
+		if (previousMapMarker != null) {
+			val skiRun = SkiRun(previousMapMarker.mapItem.name, previousMapMarker.mapItem.icon,
+				previousMapMarker.color, runPoints.toList(), map)
+			parsedSkiRuns.add(skiRun)
+		}
+
+		loadedSkiRuns = parsedSkiRuns.toList()
 	}
 
 	fun clearMap() {
-		removeCircles()
+		for (skiRun in loadedSkiRuns) {
+			if (skiRun.circles.isInitialized()) {
+				for (circle in skiRun.circles.value) {
+					circle.remove()
+				}
+			}
 
-		for (polyline in polylines) {
-			polyline.remove()
+			if (skiRun.polyline.isInitialized()) {
+				skiRun.polyline.value.remove()
+			}
 		}
-		polylines.clear()
+
+		loadedSkiRuns = emptyList()
+		System.gc()
 	}
 
 	override fun getInfoContents(marker: Marker): View? {
