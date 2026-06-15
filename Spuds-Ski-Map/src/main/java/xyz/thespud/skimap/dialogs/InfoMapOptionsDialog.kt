@@ -14,6 +14,7 @@ open class InfoMapOptionsDialog(private val infoMapActivity: InfoMapActivity): M
 
 	private var showDotsImage: MapOptionItem? = null
 
+	@Suppress("DEPRECATION")
 	override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
 		val view = super.getView(position, convertView, parent)
 

@@ -130,6 +130,7 @@ class InfoMapActivity(val activity: AppCompatActivity, view: View, cameraPositio
 		loadedSkiRuns = parsedSkiRuns.toList()
 	}
 
+	@Suppress("DEPRECATION")
 	fun clearMap() {
 		for (skiRun in loadedSkiRuns) {
 			if (skiRun.circles.isInitialized()) {
