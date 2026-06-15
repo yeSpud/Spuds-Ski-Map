@@ -6,18 +6,11 @@ import com.google.maps.android.data.kml.KmlPlacemark
 import xyz.thespud.skimap.R
 import java.util.Collections
 
-abstract class MapItem {
-
-	val name: String
-
-	@DrawableRes
-	val icon: Int
+abstract class MapItem: MapItemBase {
 
 	val metadata = HashMap<String, Any>()
 
-	constructor(placemark: KmlPlacemark, icon: Int) {
-		name = getPlacemarkName(placemark)
-		this.icon = icon
+	constructor(placemark: KmlPlacemark, icon: Int): super(getPlacemarkName(placemark), icon) {
 
 		val properties: List<String> = if (placemark.hasProperty(PROPERTY_KEY)) {
 			placemark.getProperty(PROPERTY_KEY).split('\n')
@@ -28,10 +21,7 @@ abstract class MapItem {
 		parseMetadata(properties)
 	}
 
-	constructor(name: String) {
-		this.name = name
-		this.icon = R.drawable.ic_missing
-	}
+	constructor(name: String): super(name, R.drawable.ic_missing)
 
 	abstract fun parseMetadata(properties: List<String>)
 
