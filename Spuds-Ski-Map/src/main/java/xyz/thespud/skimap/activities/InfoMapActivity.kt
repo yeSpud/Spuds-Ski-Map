@@ -5,7 +5,7 @@ import android.location.Location
 import android.util.Log
 import android.view.View
 import android.widget.TextView
-import androidx.appcompat.app.AppCompatActivity
+import androidx.activity.ComponentActivity
 import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
@@ -24,7 +24,7 @@ import xyz.thespud.skimap.mapItem.InfoMapMarker
 import xyz.thespud.skimap.mapItem.SkiRun
 import kotlin.math.roundToInt
 
-class InfoMapActivity(val activity: AppCompatActivity, view: View, cameraPosition: CameraPosition,
+class InfoMapActivity(val activity: ComponentActivity, view: View, cameraPosition: CameraPosition,
                       cameraBounds: LatLngBounds?, skiAreaObjects: SkiAreaObjects, icons: CustomIcons,
                       showDebug: Boolean = false): MapHandler(view, cameraPosition, cameraBounds,
 	showDebug), GoogleMap.InfoWindowAdapter {
