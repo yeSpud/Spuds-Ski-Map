@@ -7,7 +7,7 @@ import java.util.Collections
 
 abstract class MapItem: MapItemBase {
 
-	val metadata = HashMap<String, Any>()
+	val metadata: List<Metadata>
 
 	constructor(placemark: KmlPlacemark, icon: Int): super(getPlacemarkName(placemark), icon) {
 
@@ -17,12 +17,12 @@ abstract class MapItem: MapItemBase {
 			Collections.emptyList()
 		}
 
-		parseMetadata(properties)
+		metadata = parseMetadata(properties)
 	}
 
-	constructor(name: String): super(name, R.drawable.ic_missing)
+	constructor(name: String): super(name, R.drawable.ic_missing) { metadata = emptyList() }
 
-	abstract fun parseMetadata(properties: List<String>)
+	abstract fun parseMetadata(properties: List<String>): List<Metadata>
 
 	companion object {
 		private const val PROPERTY_KEY = "description"
