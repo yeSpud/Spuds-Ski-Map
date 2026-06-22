@@ -32,7 +32,7 @@ class PolygonMapItem: MapItem {
 			}
 		}
 
-		return mutableMetadata.toList()
+		return mutableMetadata
 	}
 
 	fun isLiftlineRun(skilift: PolygonMapItem): Boolean {

@@ -49,7 +49,7 @@ class PolylineMapItem(placemark: KmlPlacemark, icon: Int = R.drawable.ic_missing
 			}
 		}
 
-		return mutableMetadata.toList()
+		return mutableMetadata
 	}
 
 	companion object {
