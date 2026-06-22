@@ -16,9 +16,9 @@ import android.os.Process
 import android.util.Log
 import android.view.View
 import android.widget.Toast
+import androidx.activity.ComponentActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
@@ -33,7 +33,7 @@ import xyz.thespud.skimap.locationmanager.SkiAreaObjects
 import xyz.thespud.skimap.services.SkierLocationService
 import xyz.thespud.skimap.services.SkiingNotification.NOTIFICATION_PERMISSION
 
-class LiveMapActivity(val activity: FragmentActivity, view: View, cameraPosition: CameraPosition,
+class LiveMapActivity(val activity: ComponentActivity, view: View, cameraPosition: CameraPosition,
                       cameraBounds: LatLngBounds?, skiAreaObjects: SkiAreaObjects, icons: CustomIcons,
                       showDebug: Boolean = false): MapHandler(view,
 	cameraPosition, cameraBounds, showDebug), GoogleMap.OnMyLocationClickListener {

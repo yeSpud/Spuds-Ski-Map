@@ -49,7 +49,7 @@ class InfoLocationManager(skiAreaObjects: SkiAreaObjects, icons: CustomIcons, go
 	override fun checkIfLiftlineRun(run: InfoMapMarker): InfoMapMarker {
 		val liftline = isOnChairlift ?: return run
 
-		if (run.mapItem.isLiftlineRun(liftline.name)) {
+		if (run.mapItem.isLiftlineRun(liftline)) {
 
 			// Since this is a liftline run AND we are "on a chairlift" return that chairlift
 			return InfoMapMarker(liftline, run.location, RED_MARKER, Color.RED)

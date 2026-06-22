@@ -35,7 +35,7 @@ class LiveLocationManager private constructor(skiAreaObjects: SkiAreaObjects, ic
 	override fun checkIfLiftlineRun(run: PolygonMapItem): PolygonMapItem {
 		val liftline = isOnChairlift ?: return run
 
-		if (run.isLiftlineRun(liftline.name)) {
+		if (run.isLiftlineRun(liftline)) {
 
 			// Since this is a liftline run AND we are "on a chairlift" return that chairlift
 			return liftline

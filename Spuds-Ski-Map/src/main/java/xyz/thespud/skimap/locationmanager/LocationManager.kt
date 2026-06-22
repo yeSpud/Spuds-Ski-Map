@@ -19,9 +19,11 @@ import com.google.maps.android.ktx.addPolygon
 import com.google.maps.android.ktx.addPolyline
 import com.google.maps.android.ktx.utils.kml.kmlLayer
 import xyz.thespud.skimap.R
+import xyz.thespud.skimap.mapItem.EasiestWayDown
 import xyz.thespud.skimap.mapItem.MapItem
 import xyz.thespud.skimap.mapItem.PolygonMapItem
 import xyz.thespud.skimap.mapItem.PolylineMapItem
+import xyz.thespud.skimap.mapItem.get
 
 abstract class LocationManager<T>(skiAreaObjects: SkiAreaObjects, private val icons: CustomIcons, googleMap: GoogleMap,
                                   context: Context, drawOpaqueRuns: Boolean) {
@@ -54,8 +56,7 @@ abstract class LocationManager<T>(skiAreaObjects: SkiAreaObjects, private val ic
 
 	fun locationInBounds(location: Location, bounds: List<PolygonMapItem>): PolygonMapItem? {
 		for (polygon in bounds) {
-			if (PolyUtil.containsLocation(location.latitude, location.longitude, polygon.points,
-					true)) {
+			if (PolyUtil.containsLocation(location.latitude, location.longitude, polygon.points, true)) {
 				return polygon
 			}
 		}
@@ -118,7 +119,7 @@ abstract class LocationManager<T>(skiAreaObjects: SkiAreaObjects, private val ic
 			val polyline = googleMap.addPolyline {
 				addAll(coordinates)
 				color(argb)
-				if (polylineMapItem.metadata[PolylineMapItem.EASIEST_WAY_DOWN_KEY] != null) {
+				if (polylineMapItem.metadata.get<EasiestWayDown>() != null) {
 					pattern(listOf(Gap(2.0F), Dash(8.0F)))
 				}
 				geodesic(true)
