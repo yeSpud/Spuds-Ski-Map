@@ -14,8 +14,10 @@ class PolygonMapItem: MapItem {
 
 	constructor(name: String): super(name) { this.points = emptyList() }
 
-	override fun parseMetadata(properties: List<String>) {
+	override fun parseMetadata(properties: List<String>): List<Metadata> {
 		val tag = "parseMetadata"
+		val mutableMetadata = mutableListOf<Metadata>()
+
 		for (property in properties) {
 			Log.v(tag, "Parsing property '$property' for $name")
 			if (property.startsWith(LIFTLINE_RUN_KEY)) {
@@ -26,19 +28,18 @@ class PolygonMapItem: MapItem {
 					Log.v(tag, "Adding $name to liftline of $liftName")
 					liftlines.add(liftName)
 				}
-				metadata[LIFTLINE_RUN_KEY] = liftlines.toList()
+				mutableMetadata.add(Liftline(liftlines))
 			}
 		}
+
+		return mutableMetadata.toList()
 	}
 
-	fun isLiftlineRun(chairliftName: String): Boolean {
-		val liftlines = metadata[LIFTLINE_RUN_KEY]
-		if (liftlines == null || liftlines !is List<*>) { return false }
+	fun isLiftlineRun(skilift: PolygonMapItem): Boolean {
+		val liftlines = metadata.get<Liftline>() ?: return false
 
-		for (liftline in liftlines) {
-			if (liftline == chairliftName) {
-				return true
-			}
+		for (skiliftName in liftlines.skiliftNames) {
+			if (skiliftName == skilift.name) { return true }
 		}
 
 		return false
