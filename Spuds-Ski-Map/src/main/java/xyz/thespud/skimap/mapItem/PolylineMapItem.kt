@@ -13,9 +13,7 @@ class PolylineMapItem(placemark: KmlPlacemark, icon: Int = R.drawable.ic_missing
 		private set
 
 	fun clearPolylines() {
-		for (polyline in polylines) {
-			polyline.remove()
-		}
+		for (polyline in polylines) { polyline.remove() }
 		polylines.clear()
 	}
 
@@ -34,24 +32,24 @@ class PolylineMapItem(placemark: KmlPlacemark, icon: Int = R.drawable.ic_missing
 		defaultVisibility = visible
 
 		var onlyShowNightRun = true
-		val isRunNightRun = metadata[NIGHT_RUN_KEY] as Boolean?
-		if (nightRunsOnly && isRunNightRun != null) {
-			onlyShowNightRun = isRunNightRun
-		}
+		val isRunNightRun = metadata.get<NightRun>() != null
+		if (nightRunsOnly) { onlyShowNightRun = isRunNightRun }
 
-		for (polyline in polylines) {
-			polyline.isVisible = defaultVisibility && onlyShowNightRun
-		}
+		for (polyline in polylines) { polyline.isVisible = defaultVisibility && onlyShowNightRun }
 	}
 
-	override fun parseMetadata(properties: List<String>) {
+	override fun parseMetadata(properties: List<String>): List<Metadata> {
+		val mutableMetadata = mutableListOf<Metadata>()
+
 		for (property in properties) {
 			Log.v("parseMetadata", "Parsing property $property")
 			when (property) {
-				NIGHT_RUN_KEY -> metadata[NIGHT_RUN_KEY] = true
-				EASIEST_WAY_DOWN_KEY -> metadata[EASIEST_WAY_DOWN_KEY] = true
+				NIGHT_RUN_KEY -> mutableMetadata.add(NightRun())
+				EASIEST_WAY_DOWN_KEY -> mutableMetadata.add(EasiestWayDown())
 			}
 		}
+
+		return mutableMetadata.toList()
 	}
 
 	companion object {
