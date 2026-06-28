@@ -107,8 +107,8 @@ object SkiingNotification {
 		return NotificationCompat.Action(0, "Stop Tracking", pendingIntent)
 	}
 
-	private fun getNotificationBuilder(context: Context, channelId: String, @DrawableRes icon: Int,
-	                                   showTime: Boolean, @StringRes titleText: Int, pendingIntent: PendingIntent?):
+	fun getNotificationBuilder(context: Context, channelId: String, @DrawableRes icon: Int,
+	                                   showTime: Boolean, @StringRes titleText: Int, pendingIntent: PendingIntent):
 			NotificationCompat.Builder {
 
 		return NotificationCompat.Builder(context, channelId)
