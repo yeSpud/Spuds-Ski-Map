@@ -46,27 +46,25 @@ object SkiingNotification {
 		notificationManager.cancel(TRACKING_SERVICE_ID)
 	}
 
-	fun displaySkiingActivity(context: Context, intentToLaunch: Intent?,
-	                          @DrawableRes appIcon: Int, @StringRes textResource: Int, mapMarker: MapItem) {
+	fun displaySkiingActivity(context: Context, intentToLaunch: Intent, @DrawableRes appIcon: Int,
+	                          @StringRes textResource: Int, mapMarker: MapItem) {
 		val text: String = context.getString(textResource, mapMarker.name)
 		updateTrackingNotification(context, intentToLaunch, appIcon, text, mapMarker.icon)
 	}
 
-	fun updateTrackingNotification(context: Context, intentToLaunch: Intent?,
-	                               @DrawableRes appIcon: Int, title: String, @DrawableRes icon: Int?) {
+	fun updateTrackingNotification(context: Context, intentToLaunch: Intent, @DrawableRes appIcon: Int,
+	                               title: String, @DrawableRes icon: Int?) {
 		Log.v("updateTrackingNotification", "updateTrackingNotification called!")
 		val bitmap: Bitmap? = if (icon != null) {
 			drawableToBitmap(AppCompatResources.getDrawable(context, icon)!!)
-		} else {
-			null
-		}
+		} else { null }
 
 		val notification: Notification = createTrackingNotification(context, intentToLaunch, appIcon,
 			title, bitmap)
 
 		val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-		// Make sure we arent setting the same notification
+		// Make sure we aren't setting the same notification
 		for (shownNotification in notificationManager.activeNotifications) {
 			val shownNotificationText = shownNotification.notification.extras.getString(Notification.EXTRA_TEXT)
 			val notificationText = notification.extras.getString(Notification.EXTRA_TEXT)
