@@ -44,8 +44,10 @@ class SkierLocationService : Service(), LocationListener {
 			START_TRACKING_INTENT -> {
 				Log.d(TAG, "Starting foreground service")
 
+				val intent = Intent(this, LiveMapActivity::class.java)
+
 				val notification: Notification = SkiingNotification.createTrackingNotification(this,
-					null, applicationInfo.icon, "", null)
+					intent, applicationInfo.icon, "", null)
 
 				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
 					startForeground(SkiingNotification.TRACKING_SERVICE_ID, notification,
@@ -120,7 +122,6 @@ class SkierLocationService : Service(), LocationListener {
 
 		sendBroadcast(Intent(UPDATE_TRACKING_BROADCAST))
 
-		// FIXME Fix activity not launching
 		val intent = Intent(this, LiveMapActivity::class.java)
 
 		val mapMarker = liveLocation.getMapMarker(location)
