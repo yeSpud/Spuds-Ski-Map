@@ -132,6 +132,7 @@ class LiveMapActivity(val activity: ComponentActivity, view: View, cameraPositio
 		if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
 
 			val serviceIntent = Intent(activity, SkierLocationService::class.java)
+			serviceIntent.putExtra(SkierLocationService.ACTIVITY, activity::class.java.name)
 			serviceIntent.action = SkierLocationService.START_TRACKING_INTENT
 
 			// Check if the service has already been started and is running...

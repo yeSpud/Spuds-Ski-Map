@@ -17,16 +17,17 @@ import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import com.google.maps.android.PolyUtil
 import xyz.thespud.skimap.R
-import xyz.thespud.skimap.activities.LiveMapActivity
 import xyz.thespud.skimap.locationmanager.LiveLocationManager
 
 class SkierLocationService : Service(), LocationListener {
 
 	private lateinit var locationManager: LocationManager
 
-	override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+	private var mapActivityIntent: Intent? = null
+
+	override fun onStartCommand(intent: Intent?, _flags: Int, startId: Int): Int {
 		Log.v(TAG, "onStartCommand called!")
-		super.onStartCommand(intent, flags, startId)
+		super.onStartCommand(intent, _flags, startId)
 
 		if (intent == null) {
 			Log.w(TAG, "SkierLocationService started without intent")
@@ -44,8 +45,20 @@ class SkierLocationService : Service(), LocationListener {
 			START_TRACKING_INTENT -> {
 				Log.d(TAG, "Starting foreground service")
 
+				val startingClass = intent.getStringExtra(ACTIVITY)
+				if (startingClass == null) {
+					Log.w(TAG, "Launching activity is null!")
+					return START_NOT_STICKY
+				}
+
+				val mapActivityClass = Class.forName(startingClass)
+				val launchIntent = Intent(this, mapActivityClass)
+				launchIntent.apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP }
+				Log.d(TAG, "Setting map class to: ${launchIntent.component!!.className}")
+				mapActivityIntent = launchIntent
+
 				val notification: Notification = SkiingNotification.createTrackingNotification(this,
-					null, applicationInfo.icon, "", null)
+					launchIntent, applicationInfo.icon, "", null)
 
 				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
 					startForeground(SkiingNotification.TRACKING_SERVICE_ID, notification,
@@ -120,15 +133,18 @@ class SkierLocationService : Service(), LocationListener {
 
 		sendBroadcast(Intent(UPDATE_TRACKING_BROADCAST))
 
-		// FIXME Fix activity not launching
-		val intent = Intent(this, LiveMapActivity::class.java)
+		val mapActivity = mapActivityIntent
+		if (mapActivity == null) {
+			Log.w(TAG, "Map activity intent is null!")
+			return
+		}
 
 		val mapMarker = liveLocation.getMapMarker(location)
 		if (mapMarker == null) {
-			SkiingNotification.updateTrackingNotification(this, intent,
+			SkiingNotification.updateTrackingNotification(this, mapActivity,
 				applicationInfo.icon, getString(R.string.tracking_notice), null)
 		} else {
-			SkiingNotification.displaySkiingActivity(this, intent,
+			SkiingNotification.displaySkiingActivity(this, mapActivity,
 				applicationInfo.icon, R.string.current_location, mapMarker)
 		}
 	}
@@ -151,6 +167,8 @@ class SkierLocationService : Service(), LocationListener {
 	companion object {
 
 		const val TAG = "SkierLocationService"
+
+		const val ACTIVITY = "map_class"
 
 		const val STOP_TRACKING_INTENT = "xyz.thespud.skimap.SkierLocationService.Stop"
 		const val START_TRACKING_INTENT = "xyz.thespud.skimap.SkierLocationService.Start"
