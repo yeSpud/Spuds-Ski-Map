@@ -78,7 +78,7 @@ object SkiingNotification {
 	                               title: String, iconBitmap: Bitmap?): Notification {
 
 		val pendingIntent = PendingIntent.getActivity(context, 0, intentToLaunch,
-			PendingIntent.FLAG_IMMUTABLE)
+			PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
 
 		val builder: NotificationCompat.Builder = getNotificationBuilder(context, TRACKING_SERVICE_CHANNEL_ID,
 			appIcon, false, R.string.tracking_notice, pendingIntent)
