@@ -70,30 +70,24 @@ object SkiingNotification {
 		for (shownNotification in notificationManager.activeNotifications) {
 			val shownNotificationText = shownNotification.notification.extras.getString(Notification.EXTRA_TEXT)
 			val notificationText = notification.extras.getString(Notification.EXTRA_TEXT)
-			if (shownNotificationText == notificationText) {
-				return
-			}
+			if (shownNotificationText == notificationText) { return }
 			Log.d("updateTrackingNotification", "Setting notification text to: $notificationText")
 		}
 		notificationManager.notify(TRACKING_SERVICE_ID, notification)
 	}
 
-	fun createTrackingNotification(context: Context, intentToLaunch: Intent?, @DrawableRes appIcon: Int,
+	fun createTrackingNotification(context: Context, intentToLaunch: Intent, @DrawableRes appIcon: Int,
 	                               title: String, iconBitmap: Bitmap?): Notification {
-		var pendingIntent: PendingIntent? = null
-		if (intentToLaunch != null) {
-			pendingIntent = PendingIntent.getActivity(context, 0, intentToLaunch,
-				PendingIntent.FLAG_IMMUTABLE)
-		}
+
+		val pendingIntent = PendingIntent.getActivity(context, 0, intentToLaunch,
+			PendingIntent.FLAG_IMMUTABLE)
 
 		val builder: NotificationCompat.Builder = getNotificationBuilder(context, TRACKING_SERVICE_CHANNEL_ID,
 			appIcon, false, R.string.tracking_notice, pendingIntent)
 			.setContentText(title)
 			.addAction(getStopButton(context))
 
-		if (iconBitmap != null) {
-			builder.setLargeIcon(iconBitmap)
-		}
+		if (iconBitmap != null) { builder.setLargeIcon(iconBitmap) }
 
 		return builder.build()
 	}
@@ -112,7 +106,7 @@ object SkiingNotification {
 			NotificationCompat.Builder {
 
 		return NotificationCompat.Builder(context, channelId)
-			.setSmallIcon(icon) // context.applicationInfo.icon
+			.setSmallIcon(icon)
 			.setShowWhen(showTime)
 			.setContentTitle(context.getString(titleText))
 			.setContentIntent(pendingIntent)
@@ -123,9 +117,7 @@ object SkiingNotification {
 	 */
 	private fun drawableToBitmap(drawable: Drawable): Bitmap? {
 
-		if (drawable is BitmapDrawable) {
-			return drawable.bitmap
-		}
+		if (drawable is BitmapDrawable) { return drawable.bitmap }
 
 		val bitmap: Bitmap = createBitmap(drawable.intrinsicWidth, drawable.intrinsicHeight)
 
