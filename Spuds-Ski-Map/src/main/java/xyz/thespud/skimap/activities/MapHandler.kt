@@ -1,7 +1,9 @@
 package xyz.thespud.skimap.activities
 
+import android.content.Intent
 import android.util.Log
 import android.view.View
+import androidx.activity.ComponentActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -13,7 +15,7 @@ import xyz.thespud.skimap.locationmanager.CustomIcons
 import xyz.thespud.skimap.locationmanager.LocationManager
 import xyz.thespud.skimap.locationmanager.SkiAreaObjects
 
-abstract class MapHandler(private val view: View, private val cameraPosition: CameraPosition,
+abstract class MapHandler(val activity: ComponentActivity, private val view: View, private val cameraPosition: CameraPosition,
                           private val cameraBounds: LatLngBounds?, internal val skiAreaObjects: SkiAreaObjects,
                           internal val icons: CustomIcons, private val showDebug: Boolean): OnMapReadyCallback {
 
@@ -22,6 +24,8 @@ abstract class MapHandler(private val view: View, private val cameraPosition: Ca
 	abstract val locationManager: LocationManager<*>?
 
 	var isNightOnly = false
+
+	abstract val mapReadyBroadcastFilter: String
 
 	open fun destroy() {
 
@@ -49,12 +53,14 @@ abstract class MapHandler(private val view: View, private val cameraPosition: Ca
 			}
 		}
 
-		// Clear the map if its not null.
+		// Clear the map if it's not null.
 		Log.v("MapHandler", "Clearing map.")
 		googleMap?.clear()
 
-		// todo Add broadcast for map event with am intent that has an extra boolean of MAPREADY = FALSE
-
+		// Add broadcast for map event with am intent that has an extra boolean of MAPREADY = FALSE
+		val broadcastIntent = Intent(mapReadyBroadcastFilter)
+		broadcastIntent.putExtra(MAPREADY, false)
+		activity.sendBroadcast(broadcastIntent)
 
 		// This frees up a bunch of ram, so call the garbage collection to collect the free ram
 		System.gc()
@@ -102,7 +108,10 @@ abstract class MapHandler(private val view: View, private val cameraPosition: Ca
 
 		googleMap = map
 
-		// FIXME Add broadcast for map event with am intent that has an extra boolean of MAPREADY = TRUE
+		// Add broadcast for map event with am intent that has an extra boolean of MAPREADY = TRUE
+		val broadcastIntent = Intent(mapReadyBroadcastFilter)
+		broadcastIntent.putExtra(MAPREADY, true)
+		activity.sendBroadcast(broadcastIntent)
 	}
 
 	// For fixing edge to edge behavior
@@ -122,6 +131,9 @@ abstract class MapHandler(private val view: View, private val cameraPosition: Ca
 	}
 
 	companion object {
+
+		const val MAPREADY = "MapReady"
+
 		private const val MINIMUM_ZOOM = 13.0F
 		private const val MAXIMUM_ZOOM = 20.0F
 	}
