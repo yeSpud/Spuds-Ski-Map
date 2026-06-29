@@ -21,7 +21,6 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.maps.GoogleMap
-import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLngBounds
 import kotlinx.coroutines.Dispatchers
@@ -33,14 +32,14 @@ import xyz.thespud.skimap.locationmanager.SkiAreaObjects
 import xyz.thespud.skimap.services.SkierLocationService
 import xyz.thespud.skimap.services.SkiingNotification.NOTIFICATION_PERMISSION
 
-class LiveMapActivity(val activity: ComponentActivity, view: View, cameraPosition: CameraPosition,
+class LiveMapActivity(activity: ComponentActivity, view: View, cameraPosition: CameraPosition,
                       cameraBounds: LatLngBounds?, skiAreaObjects: SkiAreaObjects, icons: CustomIcons,
-                      showDebug: Boolean = false): MapHandler(view,
-	cameraPosition, cameraBounds, showDebug), GoogleMap.OnMyLocationClickListener {
+                      showDebug: Boolean = false): MapHandler(activity, view, cameraPosition, cameraBounds,
+	skiAreaObjects, icons, showDebug), GoogleMap.OnMyLocationClickListener {
 
 	override lateinit var locationManager: LiveLocationManager
 
-	var isMapSetup = false
+	override val mapReadyBroadcastFilter: String = BROADCASTFILTER
 
 	var manuallyDisabled = false
 	private set
@@ -54,12 +53,12 @@ class LiveMapActivity(val activity: ComponentActivity, view: View, cameraPositio
 		override fun onReceive(context: Context?, intent: Intent?) { setIsTracking(false) }
 	}
 
-	override val additionalCallback: OnMapReadyCallback = OnMapReadyCallback { map ->
-		Log.v("additionalCallback", "additionalCallback called for LiveMapActivity")
+	override fun onMapReady(map: GoogleMap) {
 
 		activity.lifecycleScope.launch(Dispatchers.Main) {
 			locationManager = LiveLocationManager.getInstance(skiAreaObjects, icons, map,
 				activity, false)
+			setLocationManagerReady()
 		}
 
 		// Determine if the user has enabled location permissions.
@@ -88,7 +87,7 @@ class LiveMapActivity(val activity: ComponentActivity, view: View, cameraPositio
 			alertDialogBuilder.create().show()
 		}
 
-		isMapSetup = true
+		super.onMapReady(map)
 	}
 
 	// fixme callback not being called when location dot is clicked
@@ -119,6 +118,7 @@ class LiveMapActivity(val activity: ComponentActivity, view: View, cameraPositio
 
 	fun launchLocationService() {
 
+		// Make sure we have the proper permissions to track the user's location
 		if (ContextCompat.checkSelfPermission(activity, Manifest.permission.POST_NOTIFICATIONS)
 			== PackageManager.PERMISSION_DENIED) {
 			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -144,9 +144,7 @@ class LiveMapActivity(val activity: ComponentActivity, view: View, cameraPositio
 			@Suppress("DEPRECATION")
 			for (runningServices in activityManager.getRunningServices(Int.MAX_VALUE)) {
 				if (SkierLocationService::class.java.name == runningServices.service.className) {
-					if (runningServices.foreground) {
-						return
-					}
+					if (runningServices.foreground) { return }
 				}
 			}
 
@@ -158,6 +156,7 @@ class LiveMapActivity(val activity: ComponentActivity, view: View, cameraPositio
 
 	override fun destroy() {
 		super.destroy()
+		locationManager.destroy()
 		activity.unregisterReceiver(startTrackingReceiver)
 		activity.unregisterReceiver(stopTrackingReceiver)
 	}
@@ -174,5 +173,7 @@ class LiveMapActivity(val activity: ComponentActivity, view: View, cameraPositio
 
 	companion object {
 		const val permissionValue = 29500
+
+		const val BROADCASTFILTER = "xyz.thespud.skimap.LiveMapBroadcast"
 	}
 }

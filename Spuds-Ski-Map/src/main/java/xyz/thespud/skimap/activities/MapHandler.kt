@@ -1,7 +1,9 @@
 package xyz.thespud.skimap.activities
 
+import android.content.Intent
 import android.util.Log
 import android.view.View
+import androidx.activity.ComponentActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -9,18 +11,23 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLngBounds
+import xyz.thespud.skimap.locationmanager.CustomIcons
 import xyz.thespud.skimap.locationmanager.LocationManager
+import xyz.thespud.skimap.locationmanager.SkiAreaObjects
 
-abstract class MapHandler(private val view: View, private val cameraPosition: CameraPosition,
-                          private val cameraBounds: LatLngBounds?, private val showDebug: Boolean): OnMapReadyCallback {
+abstract class MapHandler(val activity: ComponentActivity, private val view: View, private val cameraPosition: CameraPosition,
+                          private val cameraBounds: LatLngBounds?, protected val skiAreaObjects: SkiAreaObjects,
+                          protected val icons: CustomIcons, private val showDebug: Boolean): OnMapReadyCallback {
 
-	internal var googleMap: GoogleMap? = null
+	protected var googleMap: GoogleMap? = null
+	private var mapReady = false
 
 	abstract val locationManager: LocationManager<*>?
+	private var locationManagerReady = false
 
 	var isNightOnly = false
 
-	abstract val additionalCallback: OnMapReadyCallback
+	abstract val mapReadyBroadcastFilter: String
 
 	open fun destroy() {
 
@@ -48,11 +55,18 @@ abstract class MapHandler(private val view: View, private val cameraPosition: Ca
 			}
 		}
 
-		// Clear the map if its not null.
+		// Clear the map if it's not null.
 		Log.v("MapHandler", "Clearing map.")
+		mapReady = false
 		googleMap?.clear()
 
+		// Add broadcast for map event with am intent that has an extra boolean of MAPREADY = FALSE
+		val broadcastIntent = Intent(mapReadyBroadcastFilter)
+		broadcastIntent.putExtra(MAPREADY, false)
+		activity.sendBroadcast(broadcastIntent)
+
 		// This frees up a bunch of ram, so call the garbage collection to collect the free ram
+		locationManagerReady = false
 		System.gc()
 	}
 
@@ -91,16 +105,11 @@ abstract class MapHandler(private val view: View, private val cameraPosition: Ca
 		map.isIndoorEnabled = false
 		map.mapType = GoogleMap.MAP_TYPE_SATELLITE
 
-		// Load the various polylines and polygons onto the map.
-		// activity.lifecycleScope.launch(Dispatchers.Default) { loadSkiRuns() }
-
 		applyMapInsets(view, map)
 
 		googleMap = map
 
-		Log.d("onMapReady", "Running additional setup steps...")
-		additionalCallback.onMapReady(googleMap!!)
-		Log.d("onMapReady", "Finished setting up map.")
+		setMapReady()
 	}
 
 	// For fixing edge to edge behavior
@@ -119,7 +128,39 @@ abstract class MapHandler(private val view: View, private val cameraPosition: Ca
 		view.requestApplyInsets()
 	}
 
+	private fun checkBroadcast() {
+
+		if (mapReady && locationManagerReady) {
+
+			// Add broadcast for map event with am intent that has an extra boolean of MAPREADY = TRUE
+			val broadcastIntent = Intent(mapReadyBroadcastFilter)
+			broadcastIntent.putExtra(MAPREADY, true)
+			activity.sendBroadcast(broadcastIntent)
+
+		} else {
+
+			val TAG = "checkBroadcast"
+
+			if (!mapReady) { Log.i(TAG, "Map not ready") }
+
+			if (!locationManagerReady){ Log.i(TAG, "Location manager not ready") }
+		}
+	}
+
+	protected fun setMapReady() {
+		mapReady = true
+		checkBroadcast()
+	}
+
+	protected fun setLocationManagerReady() {
+		locationManagerReady = true
+		checkBroadcast()
+	}
+
 	companion object {
+
+		const val MAPREADY = "MapReady"
+
 		private const val MINIMUM_ZOOM = 13.0F
 		private const val MAXIMUM_ZOOM = 20.0F
 	}

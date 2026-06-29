@@ -105,6 +105,11 @@ class LiveLocationManager private constructor(skiAreaObjects: SkiAreaObjects, ic
 		return null
 	}
 
+	fun destroy() {
+		Log.d("LiveLocationManager", "Destroying singleton instance")
+		instance = null
+	}
+
 	companion object {
 
 		@Volatile
