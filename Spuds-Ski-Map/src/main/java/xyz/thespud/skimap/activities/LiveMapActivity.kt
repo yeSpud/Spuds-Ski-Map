@@ -156,6 +156,7 @@ class LiveMapActivity(activity: ComponentActivity, view: View, cameraPosition: C
 
 	override fun destroy() {
 		super.destroy()
+		locationManager.destroy()
 		activity.unregisterReceiver(startTrackingReceiver)
 		activity.unregisterReceiver(stopTrackingReceiver)
 	}

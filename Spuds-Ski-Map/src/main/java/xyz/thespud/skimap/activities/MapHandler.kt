@@ -66,6 +66,7 @@ abstract class MapHandler(val activity: ComponentActivity, private val view: Vie
 		activity.sendBroadcast(broadcastIntent)
 
 		// This frees up a bunch of ram, so call the garbage collection to collect the free ram
+		locationManagerReady = false
 		System.gc()
 	}
 
