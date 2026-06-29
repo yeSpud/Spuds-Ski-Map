@@ -26,8 +26,8 @@ import kotlin.math.roundToInt
 
 class InfoMapActivity(val activity: ComponentActivity, view: View, cameraPosition: CameraPosition,
                       cameraBounds: LatLngBounds?, skiAreaObjects: SkiAreaObjects, icons: CustomIcons,
-                      showDebug: Boolean = false): MapHandler(view, cameraPosition, cameraBounds,
-	showDebug), GoogleMap.InfoWindowAdapter {
+                      showDebug: Boolean = false): MapHandler(view, cameraPosition, cameraBounds, skiAreaObjects,
+	icons, showDebug), GoogleMap.InfoWindowAdapter {
 
 	override var locationManager: InfoLocationManager? = null
 
@@ -38,9 +38,8 @@ class InfoMapActivity(val activity: ComponentActivity, view: View, cameraPositio
 	var loadedSkiRuns: List<SkiRun> = emptyList()
 	private set
 
-	@SuppressLint("PotentialBehaviorOverride")
-	override val additionalCallback: OnMapReadyCallback = OnMapReadyCallback { map ->
-		Log.v("additionalCallback", "additionalCallback called for InfoMapActivity")
+	override fun onMapReady(map: GoogleMap) {
+		super.onMapReady(map)
 
 		map.setOnCircleClickListener {
 			Log.v("onCircleClicked", "Circle clicked!")

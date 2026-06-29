@@ -35,12 +35,10 @@ import xyz.thespud.skimap.services.SkiingNotification.NOTIFICATION_PERMISSION
 
 class LiveMapActivity(val activity: ComponentActivity, view: View, cameraPosition: CameraPosition,
                       cameraBounds: LatLngBounds?, skiAreaObjects: SkiAreaObjects, icons: CustomIcons,
-                      showDebug: Boolean = false): MapHandler(view,
-	cameraPosition, cameraBounds, showDebug), GoogleMap.OnMyLocationClickListener {
+                      showDebug: Boolean = false): MapHandler(view, cameraPosition, cameraBounds, skiAreaObjects,
+	icons, showDebug), GoogleMap.OnMyLocationClickListener {
 
 	override lateinit var locationManager: LiveLocationManager
-
-	var isMapSetup = false
 
 	var manuallyDisabled = false
 	private set
@@ -54,8 +52,8 @@ class LiveMapActivity(val activity: ComponentActivity, view: View, cameraPositio
 		override fun onReceive(context: Context?, intent: Intent?) { setIsTracking(false) }
 	}
 
-	override val additionalCallback: OnMapReadyCallback = OnMapReadyCallback { map ->
-		Log.v("additionalCallback", "additionalCallback called for LiveMapActivity")
+	override fun onMapReady(map: GoogleMap) {
+		super.onMapReady(map)
 
 		activity.lifecycleScope.launch(Dispatchers.Main) {
 			locationManager = LiveLocationManager.getInstance(skiAreaObjects, icons, map,
@@ -87,8 +85,6 @@ class LiveMapActivity(val activity: ComponentActivity, view: View, cameraPositio
 			// Show the info popup about location.
 			alertDialogBuilder.create().show()
 		}
-
-		isMapSetup = true
 	}
 
 	// fixme callback not being called when location dot is clicked

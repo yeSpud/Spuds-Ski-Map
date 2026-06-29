@@ -9,18 +9,19 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLngBounds
+import xyz.thespud.skimap.locationmanager.CustomIcons
 import xyz.thespud.skimap.locationmanager.LocationManager
+import xyz.thespud.skimap.locationmanager.SkiAreaObjects
 
 abstract class MapHandler(private val view: View, private val cameraPosition: CameraPosition,
-                          private val cameraBounds: LatLngBounds?, private val showDebug: Boolean): OnMapReadyCallback {
+                          private val cameraBounds: LatLngBounds?, internal val skiAreaObjects: SkiAreaObjects,
+                          internal val icons: CustomIcons, private val showDebug: Boolean): OnMapReadyCallback {
 
 	internal var googleMap: GoogleMap? = null
 
 	abstract val locationManager: LocationManager<*>?
 
 	var isNightOnly = false
-
-	abstract val additionalCallback: OnMapReadyCallback
 
 	open fun destroy() {
 
@@ -51,6 +52,9 @@ abstract class MapHandler(private val view: View, private val cameraPosition: Ca
 		// Clear the map if its not null.
 		Log.v("MapHandler", "Clearing map.")
 		googleMap?.clear()
+
+		// todo Add broadcast for map event with am intent that has an extra boolean of MAPREADY = FALSE
+
 
 		// This frees up a bunch of ram, so call the garbage collection to collect the free ram
 		System.gc()
@@ -98,9 +102,7 @@ abstract class MapHandler(private val view: View, private val cameraPosition: Ca
 
 		googleMap = map
 
-		Log.d("onMapReady", "Running additional setup steps...")
-		additionalCallback.onMapReady(googleMap!!)
-		Log.d("onMapReady", "Finished setting up map.")
+		// FIXME Add broadcast for map event with am intent that has an extra boolean of MAPREADY = TRUE
 	}
 
 	// For fixing edge to edge behavior
