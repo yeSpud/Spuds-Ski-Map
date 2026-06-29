@@ -1,6 +1,5 @@
 package xyz.thespud.skimap.activities
 
-import android.annotation.SuppressLint
 import android.location.Location
 import android.util.Log
 import android.view.View
@@ -8,7 +7,6 @@ import android.widget.TextView
 import androidx.activity.ComponentActivity
 import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.maps.GoogleMap
-import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
@@ -24,12 +22,14 @@ import xyz.thespud.skimap.mapItem.InfoMapMarker
 import xyz.thespud.skimap.mapItem.SkiRun
 import kotlin.math.roundToInt
 
-class InfoMapActivity(val activity: ComponentActivity, view: View, cameraPosition: CameraPosition,
+class InfoMapActivity(activity: ComponentActivity, view: View, cameraPosition: CameraPosition,
                       cameraBounds: LatLngBounds?, skiAreaObjects: SkiAreaObjects, icons: CustomIcons,
-                      showDebug: Boolean = false): MapHandler(view, cameraPosition, cameraBounds, skiAreaObjects,
-	icons, showDebug), GoogleMap.InfoWindowAdapter {
+                      showDebug: Boolean = false): MapHandler(activity, view, cameraPosition, cameraBounds,
+	skiAreaObjects, icons, showDebug), GoogleMap.InfoWindowAdapter {
 
 	override var locationManager: InfoLocationManager? = null
+
+	override val mapReadyBroadcastFilter: String = BROADCASTFILTER
 
 	private var runMarker: Marker? = null
 
@@ -194,5 +194,9 @@ class InfoMapActivity(val activity: ComponentActivity, view: View, cameraPositio
 	override fun getInfoWindow(marker: Marker): View? {
 		Log.v("InfoMapActivity", "getInfoWindow called")
 		return null
+	}
+
+	companion object {
+		const val BROADCASTFILTER = "xyz.thespud.skimap.InfoMapBroadcast"
 	}
 }

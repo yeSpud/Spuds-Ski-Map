@@ -21,7 +21,6 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.maps.GoogleMap
-import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLngBounds
 import kotlinx.coroutines.Dispatchers
@@ -33,12 +32,14 @@ import xyz.thespud.skimap.locationmanager.SkiAreaObjects
 import xyz.thespud.skimap.services.SkierLocationService
 import xyz.thespud.skimap.services.SkiingNotification.NOTIFICATION_PERMISSION
 
-class LiveMapActivity(val activity: ComponentActivity, view: View, cameraPosition: CameraPosition,
+class LiveMapActivity(activity: ComponentActivity, view: View, cameraPosition: CameraPosition,
                       cameraBounds: LatLngBounds?, skiAreaObjects: SkiAreaObjects, icons: CustomIcons,
-                      showDebug: Boolean = false): MapHandler(view, cameraPosition, cameraBounds, skiAreaObjects,
-	icons, showDebug), GoogleMap.OnMyLocationClickListener {
+                      showDebug: Boolean = false): MapHandler(activity, view, cameraPosition, cameraBounds,
+	skiAreaObjects, icons, showDebug), GoogleMap.OnMyLocationClickListener {
 
 	override lateinit var locationManager: LiveLocationManager
+
+	override val mapReadyBroadcastFilter: String = BROADCASTFILTER
 
 	var manuallyDisabled = false
 	private set
@@ -170,5 +171,7 @@ class LiveMapActivity(val activity: ComponentActivity, view: View, cameraPositio
 
 	companion object {
 		const val permissionValue = 29500
+
+		const val BROADCASTFILTER = "xyz.thespud.skimap.LiveMapBroadcast"
 	}
 }
