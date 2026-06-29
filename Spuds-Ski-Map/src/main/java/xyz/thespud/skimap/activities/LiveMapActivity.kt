@@ -54,11 +54,11 @@ class LiveMapActivity(activity: ComponentActivity, view: View, cameraPosition: C
 	}
 
 	override fun onMapReady(map: GoogleMap) {
-		super.onMapReady(map)
 
 		activity.lifecycleScope.launch(Dispatchers.Main) {
 			locationManager = LiveLocationManager.getInstance(skiAreaObjects, icons, map,
 				activity, false)
+			setLocationManagerReady()
 		}
 
 		// Determine if the user has enabled location permissions.
@@ -86,6 +86,8 @@ class LiveMapActivity(activity: ComponentActivity, view: View, cameraPosition: C
 			// Show the info popup about location.
 			alertDialogBuilder.create().show()
 		}
+
+		super.onMapReady(map)
 	}
 
 	// fixme callback not being called when location dot is clicked

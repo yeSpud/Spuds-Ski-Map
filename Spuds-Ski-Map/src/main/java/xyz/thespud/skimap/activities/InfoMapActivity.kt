@@ -39,8 +39,6 @@ class InfoMapActivity(activity: ComponentActivity, view: View, cameraPosition: C
 	private set
 
 	override fun onMapReady(map: GoogleMap) {
-		super.onMapReady(map)
-
 		map.setOnCircleClickListener {
 			Log.v("onCircleClicked", "Circle clicked!")
 			map.setInfoWindowAdapter(this)
@@ -83,9 +81,12 @@ class InfoMapActivity(activity: ComponentActivity, view: View, cameraPosition: C
 
 		activity.lifecycleScope.launch(Dispatchers.Main) {
 			locationManager = InfoLocationManager(skiAreaObjects, icons, map, activity)
+			setLocationManagerReady()
 		}
 
 		map.setOnInfoWindowCloseListener { it.isVisible = false }
+
+		super.onMapReady(map)
 	}
 
 	override fun destroy() {

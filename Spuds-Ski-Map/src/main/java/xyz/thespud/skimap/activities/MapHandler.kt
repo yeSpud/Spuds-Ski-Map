@@ -16,12 +16,14 @@ import xyz.thespud.skimap.locationmanager.LocationManager
 import xyz.thespud.skimap.locationmanager.SkiAreaObjects
 
 abstract class MapHandler(val activity: ComponentActivity, private val view: View, private val cameraPosition: CameraPosition,
-                          private val cameraBounds: LatLngBounds?, internal val skiAreaObjects: SkiAreaObjects,
-                          internal val icons: CustomIcons, private val showDebug: Boolean): OnMapReadyCallback {
+                          private val cameraBounds: LatLngBounds?, protected val skiAreaObjects: SkiAreaObjects,
+                          protected val icons: CustomIcons, private val showDebug: Boolean): OnMapReadyCallback {
 
-	internal var googleMap: GoogleMap? = null
+	protected var googleMap: GoogleMap? = null
+	private var mapReady = false
 
 	abstract val locationManager: LocationManager<*>?
+	private var locationManagerReady = false
 
 	var isNightOnly = false
 
@@ -55,6 +57,7 @@ abstract class MapHandler(val activity: ComponentActivity, private val view: Vie
 
 		// Clear the map if it's not null.
 		Log.v("MapHandler", "Clearing map.")
+		mapReady = false
 		googleMap?.clear()
 
 		// Add broadcast for map event with am intent that has an extra boolean of MAPREADY = FALSE
@@ -101,17 +104,11 @@ abstract class MapHandler(val activity: ComponentActivity, private val view: Vie
 		map.isIndoorEnabled = false
 		map.mapType = GoogleMap.MAP_TYPE_SATELLITE
 
-		// Load the various polylines and polygons onto the map.
-		// activity.lifecycleScope.launch(Dispatchers.Default) { loadSkiRuns() }
-
 		applyMapInsets(view, map)
 
 		googleMap = map
 
-		// Add broadcast for map event with am intent that has an extra boolean of MAPREADY = TRUE
-		val broadcastIntent = Intent(mapReadyBroadcastFilter)
-		broadcastIntent.putExtra(MAPREADY, true)
-		activity.sendBroadcast(broadcastIntent)
+		setMapReady()
 	}
 
 	// For fixing edge to edge behavior
@@ -128,6 +125,35 @@ abstract class MapHandler(val activity: ComponentActivity, private val view: Vie
 		// Request the insets be applied again since they may have already been applied to the view,
 		// and we want our newly set listener to run
 		view.requestApplyInsets()
+	}
+
+	private fun checkBroadcast() {
+
+		if (mapReady && locationManagerReady) {
+
+			// Add broadcast for map event with am intent that has an extra boolean of MAPREADY = TRUE
+			val broadcastIntent = Intent(mapReadyBroadcastFilter)
+			broadcastIntent.putExtra(MAPREADY, true)
+			activity.sendBroadcast(broadcastIntent)
+
+		} else {
+
+			val TAG = "checkBroadcast"
+
+			if (!mapReady) { Log.i(TAG, "Map not ready") }
+
+			if (!locationManagerReady){ Log.i(TAG, "Location manager not ready") }
+		}
+	}
+
+	protected fun setMapReady() {
+		mapReady = true
+		checkBroadcast()
+	}
+
+	protected fun setLocationManagerReady() {
+		locationManagerReady = true
+		checkBroadcast()
 	}
 
 	companion object {
