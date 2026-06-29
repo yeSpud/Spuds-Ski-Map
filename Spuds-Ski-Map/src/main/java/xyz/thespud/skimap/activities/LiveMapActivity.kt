@@ -118,6 +118,7 @@ class LiveMapActivity(activity: ComponentActivity, view: View, cameraPosition: C
 
 	fun launchLocationService() {
 
+		// Make sure we have the proper permissions to track the user's location
 		if (ContextCompat.checkSelfPermission(activity, Manifest.permission.POST_NOTIFICATIONS)
 			== PackageManager.PERMISSION_DENIED) {
 			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -143,9 +144,7 @@ class LiveMapActivity(activity: ComponentActivity, view: View, cameraPosition: C
 			@Suppress("DEPRECATION")
 			for (runningServices in activityManager.getRunningServices(Int.MAX_VALUE)) {
 				if (SkierLocationService::class.java.name == runningServices.service.className) {
-					if (runningServices.foreground) {
-						return
-					}
+					if (runningServices.foreground) { return }
 				}
 			}
 
