@@ -32,9 +32,11 @@ open class LiveMapOptionsDialog(private val liveMapActivity: LiveMapActivity,
 				}
 			}
 
+			/*
 			if (toggleLocationTracking.itemEnabled != liveMapActivity.isTrackingLocation) {
 				toggleLocationTracking.toggleOptionVisibility()
 			}
+			 */
 
 			locationTrackingButton = toggleLocationTracking
 		}
