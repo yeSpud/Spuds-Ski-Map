@@ -11,6 +11,7 @@ import xyz.thespud.skimap.R
 import xyz.thespud.skimap.activities.MapHandler
 import xyz.thespud.skimap.mapItem.PolylineMapItem
 
+@Deprecated("Will be removed - use individual buttons to create option menu")
 open class MapOptionsDialog(private val layoutInflater: LayoutInflater, @LayoutRes private val menu: Int,
                             private val map: MapHandler) : BaseAdapter() {
 
