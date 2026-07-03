@@ -55,10 +55,10 @@ class NightRunToggle: PolylineToggle {
 	@Deprecated("When using this constructor be sure to call setMapHandler() in your code")
 	constructor(context: Context, attributeSet: AttributeSet?, defStyleAttr: Int) : super(context, attributeSet, defStyleAttr)
 
-	constructor(context: Context, mapHandler: MapHandler): super(context, AppCompatResources.getDrawable(context,
-		R.drawable.ic_night)!!, AppCompatResources.getDrawable(context,
-		R.drawable.ic_sun)!!, context.getString(R.string.night_runs),
-		context.getString(R.string.all_runs), true) {
+	constructor(context: Context, mapHandler: MapHandler): super(context,
+		AppCompatResources.getDrawable(context, R.drawable.ic_night)!!,
+		AppCompatResources.getDrawable(context, R.drawable.ic_sun)!!,
+		context.getString(R.string.night_runs), context.getString(R.string.all_runs), true) {
 
 		setMapHandler(mapHandler)
 	}

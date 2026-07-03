@@ -3,9 +3,9 @@
 package xyz.thespud.skimap.dialogs
 
 import android.content.Context
-import android.graphics.drawable.Drawable
 import android.util.AttributeSet
 import android.widget.Toast
+import androidx.appcompat.content.res.AppCompatResources
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 import xyz.thespud.skimap.R
@@ -22,9 +22,11 @@ class ShowDotsToggle: MapOptionItem {
 	@Deprecated("When using this constructor be sure to call setInfoMap() in your code")
 	constructor(context: Context, attributeSet: AttributeSet?, defStyleAttr: Int) : super(context, attributeSet, defStyleAttr)
 
-	constructor(infoMap: InfoMapActivity, enabledDrawable: Drawable, disabledDrawable: Drawable,
-	            enabledText: CharSequence, disabledText: CharSequence, itemEnabled: Boolean):
-			super(infoMap.activity, enabledDrawable, disabledDrawable, enabledText, disabledText, itemEnabled) {
+	constructor(infoMap: InfoMapActivity): super(infoMap.activity,
+		AppCompatResources.getDrawable(infoMap.activity, R.drawable.ic_hide_dots)!!,
+		AppCompatResources.getDrawable(infoMap.activity, R.drawable.ic_show_dots)!!,
+		infoMap.activity.getString(R.string.show_dots), infoMap.activity.getString(R.string.hide_dots),
+		false) {
 
 		infoMapActivity = infoMap
 
