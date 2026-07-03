@@ -9,7 +9,7 @@ import xyz.thespud.skimap.activities.MapHandler
 
 abstract class PolylineToggle: MapOptionItem {
 
-	lateinit var mapHandler: MapHandler
+	protected lateinit var mapHandler: MapHandler
 		private set
 
 	abstract val clickListener: OnClickListener
@@ -26,10 +26,8 @@ abstract class PolylineToggle: MapOptionItem {
 			super(context, enabledDrawable, disabledDrawable, enabledText, disabledText, itemEnabled) {
 
 				setOnClickListener(clickListener)
-			}
-
-	fun setMapHandler(mapHandler: MapHandler) {
-		this.mapHandler = mapHandler
 	}
+
+	fun setMapHandler(mapHandler: MapHandler) { this.mapHandler = mapHandler }
 
 }
