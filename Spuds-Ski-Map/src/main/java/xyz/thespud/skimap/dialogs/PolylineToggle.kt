@@ -12,7 +12,7 @@ abstract class PolylineToggle: MapOptionItem {
 	lateinit var mapHandler: MapHandler
 		private set
 
-	abstract val clickListener: OnMapOptionItemClicked
+	abstract val clickListener: OnClickListener
 
 	@Deprecated("When using this constructor be sure to call setMapHandler() in your code")
 	constructor(context: Context): this(context, null)
