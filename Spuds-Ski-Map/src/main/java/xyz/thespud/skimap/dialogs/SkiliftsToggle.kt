@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package xyz.thespud.skimap.dialogs
 
 import android.content.Context
