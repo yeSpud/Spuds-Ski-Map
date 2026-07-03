@@ -10,11 +10,13 @@ import xyz.thespud.skimap.activities.MapHandler
 
 class SkiliftsToggle: PolylineToggle {
 
+	/*
 	override val clickListener by lazy {
 		val locationManager = mapHandler.locationManager ?: throw IllegalStateException("Location manager is null for ski option toggle")
 
 		OnMapOptionItemClicked(locationManager.chairliftPolylines, mapHandler)
 	}
+	 */
 
 	@Deprecated("When using this constructor be sure to call setMapHandler() in your code")
 	constructor(context: Context): this(context, null)
@@ -29,5 +31,11 @@ class SkiliftsToggle: PolylineToggle {
 		context.getString(R.string.hide_chairlifts), true) {
 
 		setMapHandler(mapHandler)
+
+		setOnClickListener {
+			val locationManager = mapHandler.locationManager ?: throw IllegalStateException("Location manager is null for ski option toggle")
+
+			OnMapOptionItemClicked(locationManager.chairliftPolylines, mapHandler)
+		}
 	}
 }

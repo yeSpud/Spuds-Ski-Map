@@ -10,11 +10,12 @@ import xyz.thespud.skimap.activities.MapHandler
 
 class AdvancedRunToggle: PolylineToggle {
 
+	/*
 	override val clickListener by lazy {
 		val locationManager = mapHandler.locationManager ?: throw IllegalStateException("Location manager is null for advanced runs toggle")
 
 		OnMapOptionItemClicked(locationManager.blackRunPolylines, mapHandler)
-	}
+	}*/
 
 	@Deprecated("When using this constructor be sure to call setMapHandler() in your code")
 	constructor(context: Context): this(context, null)
@@ -29,5 +30,11 @@ class AdvancedRunToggle: PolylineToggle {
 		context.getString(R.string.hide_black), true) {
 
 		setMapHandler(mapHandler)
+
+		setOnClickListener {
+			val locationManager = mapHandler.locationManager ?: throw IllegalStateException("Location manager is null for advanced runs toggle")
+
+			OnMapOptionItemClicked(locationManager.blackRunPolylines, mapHandler)
+		}
 	}
 }
