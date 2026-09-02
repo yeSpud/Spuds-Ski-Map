@@ -8,6 +8,7 @@ import xyz.thespud.skimap.R
 import xyz.thespud.skimap.activities.LiveMapActivity
 import xyz.thespud.skimap.services.SkierLocationService
 
+@Deprecated("Will be removed - use individual buttons to create option menu")
 open class LiveMapOptionsDialog(private val liveMapActivity: LiveMapActivity,
                                 @LayoutRes menu: Int = R.layout.live_map_options_v2): MapOptionsDialog(
 	liveMapActivity.activity.layoutInflater, menu, liveMapActivity) {
@@ -31,9 +32,11 @@ open class LiveMapOptionsDialog(private val liveMapActivity: LiveMapActivity,
 				}
 			}
 
+			/*
 			if (toggleLocationTracking.itemEnabled != liveMapActivity.isTrackingLocation) {
 				toggleLocationTracking.toggleOptionVisibility()
 			}
+			 */
 
 			locationTrackingButton = toggleLocationTracking
 		}

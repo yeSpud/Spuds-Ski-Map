@@ -10,7 +10,7 @@ import androidx.annotation.UiThread
 import androidx.core.graphics.drawable.DrawableCompat
 import xyz.thespud.skimap.R
 
-class MapOptionItem: LinearLayout {
+open class MapOptionItem: LinearLayout {
 
 	private val icon: ImageView
 	private val text: TextView
@@ -21,7 +21,7 @@ class MapOptionItem: LinearLayout {
 	private val enabledText: CharSequence
 	private val disabledText: CharSequence
 
-	var itemEnabled: Boolean
+	protected var itemEnabled: Boolean
 		private set
 
 	constructor(context: Context): this(context, null)

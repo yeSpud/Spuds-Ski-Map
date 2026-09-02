@@ -9,6 +9,7 @@ import kotlinx.coroutines.launch
 import xyz.thespud.skimap.R
 import xyz.thespud.skimap.activities.InfoMapActivity
 
+@Deprecated("Will be removed - use individual buttons to create option menu")
 open class InfoMapOptionsDialog(private val infoMapActivity: InfoMapActivity): MapOptionsDialog(
 	infoMapActivity.activity.layoutInflater, R.layout.info_map_options_v2, infoMapActivity) {
 

@@ -8,9 +8,7 @@ class OnMapOptionItemClicked(private val polylineMapItems: List<PolylineMapItem>
 
 	override fun onClick(mapOptionItem: View?) {
 
-		if (mapOptionItem == null || mapOptionItem !is MapOptionItem) {
-			return
-		}
+		if (mapOptionItem == null || mapOptionItem !is MapOptionItem) { return }
 
 		for (polylineMapItem in polylineMapItems) {
 			polylineMapItem.togglePolyLineVisibility(!polylineMapItem.defaultVisibility, map.isNightOnly)
